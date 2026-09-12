@@ -8,8 +8,9 @@ Generated from the current repository state on branch `main`.
 - Current tracked production file: `code/main.py`
 - Sample-comparison checkpoint: `5fcccc1` (`test: add sample comparison harness and baseline`)
 - Documentation checkpoint: `fa486bc` (`docs: record implementation status and forecast discrepancies`)
-- The baseline checkpoint had no tracked production diff; this iteration has an intentionally uncommitted amendment fix in `code/main.py` and regression coverage in `code/test_main.py`.
-- Remaining uncommitted paths are listed in [Change inventory](#change-inventory).
+- Salary amendment checkpoint: `a42fc85` (`fix: persist salary amendments across recurring projections`)
+- Evidence interface checkpoint: `173b1e4` (`feat: add validated evidence extraction interface`)
+- Remaining uncommitted paths are unrelated artifacts listed in [Change inventory](#change-inventory).
 
 This report records the initial baseline plus the targeted four-request audit and one evidence-backed salary-amendment correction. No correction factor, historical-maxima policy, or extra reserve was used for the safe-amount discrepancies; no commit or push was performed.
 
@@ -441,7 +442,7 @@ explanation_consistency: 25/25
 
 A full diff of the two comparison artifacts is empty, so this focused fix caused zero sample-output regressions and zero sample-output improvements. It corrects the future salary timeline but not any solved output field in these samples.
 
-The diagnostic and tests did not invoke `code/main.py:main()` and did not overwrite `output.csv`. No commit or push was performed.
+The diagnostic and tests did not invoke `code/main.py:main()` and did not overwrite `output.csv`. No push was performed.
 
 ### Incremental evidence-extraction interface
 
@@ -551,17 +552,20 @@ The original harness and baseline remain in:
   evaluation/sample_baseline.txt
 ```
 
-### Current uncommitted extraction-interface change
+### Committed extraction-interface checkpoint
 
-The current working-tree changes for this separate interface checkpoint are:
+The provider-neutral extraction contract, tests, evidence inventory, and post-interface comparison were committed together:
 
 ```text
-?? code/evidence_extraction.py
-?? code/test_evidence_extraction.py
-?? evaluation/evidence_inventory.md
-?? evaluation/sample_comparison_after_extraction_interface.txt
- M evaluation/progress_report.md
+173b1e4 feat: add validated evidence extraction interface
+  code/evidence_extraction.py
+  code/test_evidence_extraction.py
+  evaluation/evidence_inventory.md
+  evaluation/progress_report.md
+  evaluation/sample_comparison_after_extraction_interface.txt
 ```
+
+The remaining working-tree paths are unrelated artifacts only.
 
 Previously untracked unrelated artifacts remain preserved and are not part of this interface:
 
@@ -585,7 +589,7 @@ During this extraction-interface iteration:
 - No message or image fact was applied to projections.
 - `evaluation/sample_baseline.txt` was preserved unchanged.
 - No recurrence statistic, correction factor, or extra reserve was introduced.
-- No commit or push has been performed for this interface checkpoint.
+- The interface checkpoint was committed as `173b1e4`; no push was performed.
 
 ## Next steps
 
