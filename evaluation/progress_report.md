@@ -634,6 +634,10 @@ Important untested behavior includes:
 - plan ranking across all competing plan types
 - explanation details when spending changes are selected
 
+## Sparse confirmed salary checkpoint
+
+A scheduled `Next confirmed salary` plus at least one same calendar-day historical salary ~one month earlier now continues at the **confirmed** amount. Recurrence still requires three settled points unless that confirmation exists. Prizes/refunds/invoices are excluded. request_01: Mar/Apr/May 15 at ZAR 23320; safe **25256** matches the cap. request_15: two first-job rows + `once` first-salary message; no invented Feb/Mar payroll (safe remains 0 vs 83.05). Sample amount matches **4/25**. Comparisons: `evaluation/sample_comparison_deterministic_after_sparse_salary.txt`.
+
 ## Resumed salary evidence checkpoint
 
 `Agent.salary_evidence_applications()` keeps status, recurrence scope, date meaning, source id, and the `EvidenceFact`. Resumed `future_occurrences` salary now expands through the 90-day horizon using the evidenced payday and historical day-of-month. Multiple facts per message are stored; a childcare fact without amount/dates stays unresolved and creates no cash. Stream amendments apply only to the matched employer. Regex-extracted payroll changes default to continuing amendments, not a one-off credit.

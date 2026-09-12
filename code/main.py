@@ -577,6 +577,43 @@ class Agent:
             when = add_months(when, 1) if monthly else when + timedelta(days=step)
         return result
 
+    def sparse_confirmed_salary_continuation(
+        self, user_id: str, start: date, end: date, home: str,
+        explicit: list[ProjectionEvent], event_by_id: dict[str, Event],
+    ) -> list[ProjectionEvent]:
+        """Continue a confirmed next salary only when history plus that confirmation establish a monthly stream."""
+        result: list[ProjectionEvent] = []
+        existing = {(p.when, p.direction, p.category) for p in explicit}
+        history = self.historical_salary_events(user_id, start)
+        for projection in explicit:
+            event = event_by_id.get(projection.event_id)
+            if (
+                projection.direction != "credit" or projection.category != "salary" or event is None
+                or not self.is_salary_placeholder(event.description)
+            ):
+                continue
+            same_day = [item for item in history if item.settlement_date.day == projection.when.day]
+            if not same_day:
+                continue
+            last = same_day[-1]
+            gap = (projection.when - last.settlement_date).days
+            if gap < 27 or gap > 33:
+                continue
+            last_text = self.normalized_description(last.description)
+            if any(word in last_text for word in ("prize", "refund", "invoice", "bonus", "payout")):
+                continue
+            when = add_months(projection.when, 1)
+            sources = self.merged_source_ids((projection.event_id,), (item.event_id for item in same_day))
+            while when <= end:
+                if when > start and (when, "credit", "salary") not in existing:
+                    result.append(ProjectionEvent(
+                        when, projection.amount, "credit", "salary", projection.event_id,
+                        event.flexibility, "", sources, "sparse_confirmed_salary_continuation",
+                    ))
+                    existing.add((when, "credit", "salary"))
+                when = add_months(when, 1)
+        return result
+
     def salary_stream_key(self, projection: ProjectionEvent) -> str:
         if projection.recurring_ref:
             return projection.recurring_ref
@@ -942,7 +979,9 @@ class Agent:
             not in explicit_keys
         ]
         explicit, recurring = self.reconcile_explicit_inferred_credits(explicit, recurring, event_by_id)
-        result = explicit + recurring
+        result = explicit + recurring + self.sparse_confirmed_salary_continuation(
+            request["user_id"], start, end, profile.home_currency, explicit, event_by_id,
+        )
         relevant_messages = self.relevant_messages(request["user_id"], request["request_id"], start)
         applications = self.salary_evidence_applications(relevant_messages, profile.home_currency)
         ended_dates = self.evidence_salary_end_dates(relevant_messages)

@@ -427,6 +427,49 @@ class FinancialAgentTests(unittest.TestCase):
         agent, request = self.evidence_agent(events, messages, [fact], "2025-03-15")
         self.assertFalse(any(p.event_id == "message_payroll" for p in agent.projections(request)))
 
+    def test_sparse_confirmed_salary_continues_from_next_confirmed_row(self):
+        events = [
+            self.synthetic_event("event_25", date(2024, 2, 15), "Prorated first salary", "salary", "income", "credit", amount=Decimal("12826")),
+            self.synthetic_event("event_103", date(2024, 3, 15), "Next confirmed salary", "salary", "income", "credit",
+                                 status="scheduled", amount=Decimal("23320")),
+        ]
+        agent = self.synthetic_agent(events)
+        request = {
+            "user_id": "user_test", "request_id": "request_test", "request_date": "2024-03-03",
+            "requested_amount": "1", "desired_completion_date": "2024-06-01", "allows_partial_payment": "false",
+        }
+        credits = [p for p in agent.projections(request) if p.direction == "credit" and p.category == "salary"]
+        by_date = {p.when: p for p in credits}
+        self.assertEqual(by_date[date(2024, 3, 15)].amount, Decimal("23320"))
+        self.assertEqual(by_date[date(2024, 4, 15)].amount, Decimal("23320"))
+        self.assertEqual(by_date[date(2024, 5, 15)].amount, Decimal("23320"))
+        self.assertNotIn(date(2024, 2, 15), by_date)
+
+    def test_one_confirmed_prize_credit_does_not_continue(self):
+        events = [
+            self.synthetic_event("event_1", date(2024, 2, 15), "Lottery prize", "salary", "income", "credit", amount=Decimal("5000")),
+            self.synthetic_event("event_2", date(2024, 3, 15), "Next confirmed salary", "salary", "income", "credit",
+                                 status="scheduled", amount=Decimal("5000")),
+        ]
+        agent = self.synthetic_agent(events)
+        request = {
+            "user_id": "user_test", "request_id": "request_test", "request_date": "2024-03-03",
+            "requested_amount": "1", "desired_completion_date": "2024-06-01", "allows_partial_payment": "false",
+        }
+        credits = [p for p in agent.projections(request) if p.direction == "credit"]
+        self.assertEqual([p.when for p in credits], [date(2024, 3, 15)])
+
+    def test_request_15_first_salary_message_stays_once(self):
+        request = self.sample("request_15")
+        data = Data()
+        from main import load_evidence_facts
+        from pathlib import Path
+        data.evidence_facts = load_evidence_facts(Path(__file__).parents[1] / "evaluation/message_extraction_results.json", data.messages)
+        credits = [p for p in Agent(data).projections(request) if p.direction == "credit" and p.category == "salary"]
+        # Two historical first-job rows are not a 3-point cadence; the message is once.
+        self.assertTrue(any(p.when.isoformat() == "2026-01-15" for p in credits))
+        self.assertFalse(any(p.when.isoformat() in {"2026-02-15", "2026-03-15"} and p.event_id == "message_payroll" for p in credits))
+
     def test_explicit_event_deduplicates_same_source_series_only(self):
         events = [
             self.synthetic_event("s1", date(2025, 1, 1), "Video streaming plan"),
