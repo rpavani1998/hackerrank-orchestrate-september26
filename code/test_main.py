@@ -4,9 +4,10 @@ import unittest
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).parent))
-from main import Agent, Data, ProjectionEvent, OUTPUT_COLUMNS, dec, ddate, main
+from main import Agent, Data, Event, Profile, ProjectionEvent, OUTPUT_COLUMNS, dec, ddate, main
 
 
 class FinancialAgentTests(unittest.TestCase):
@@ -93,6 +94,72 @@ class FinancialAgentTests(unittest.TestCase):
         )
         self.assertFalse(ok)
         self.assertTrue(any(value < profile.minimum for value in balances.values()))
+
+    def synthetic_event(self, event_id, when, description, category="streaming", event_type="subscription", direction="debit"):
+        return Event(
+            event_id, "user_test", event_type, description, category, direction,
+            Decimal("10"), "USD", when, when, "settled", "", "fixed", None,
+        )
+
+    def synthetic_agent(self, events):
+        profile = Profile("user_test", "USD", Decimal("1000"), Decimal("100"), set(), set(), set(), set(), {"full_payment"}, None)
+        data = SimpleNamespace(
+            events_by_user={"user_test": events},
+            profiles={"user_test": profile},
+            messages_by_user={"user_test": []},
+            evidence_facts={},
+            convert=lambda amount, _source, _target, _when: amount,
+        )
+        return Agent(data)
+
+    def test_two_subscriptions_in_one_category_remain_separate(self):
+        events = []
+        for index, description in enumerate(("Video streaming plan", "Family streaming plan")):
+            for offset, when in enumerate((date(2025, 1, 1), date(2025, 2, 1), date(2025, 3, 1))):
+                events.append(self.synthetic_event(f"sub_{index}_{offset}", when, description))
+        projection = self.synthetic_agent(events).recurring_projection("user_test", date(2025, 3, 15), date(2025, 5, 31), "USD")
+        self.assertEqual(len(projection), 4)
+        self.assertEqual({p.recurring_ref for p in projection}, {"sub_0_2", "sub_1_2"})
+        self.assertEqual({p.source_event_ids for p in projection}, {
+            ("sub_0_0", "sub_0_1", "sub_0_2"),
+            ("sub_1_0", "sub_1_1", "sub_1_2"),
+        })
+
+    def test_grocery_merchants_remain_in_variable_category_stream(self):
+        events = [
+            self.synthetic_event("g1", date(2025, 1, 1), "Local market purchase", "groceries", "expense"),
+            self.synthetic_event("g2", date(2025, 1, 8), "Supermarket basket", "groceries", "expense"),
+            self.synthetic_event("g3", date(2025, 1, 15), "Fresh food shop", "groceries", "expense"),
+        ]
+        projection = self.synthetic_agent(events).recurring_projection("user_test", date(2025, 1, 16), date(2025, 1, 23), "USD")
+        self.assertEqual(len(projection), 1)
+        self.assertEqual(projection[0].category, "groceries")
+        self.assertEqual(projection[0].source_event_ids, ("g1", "g2", "g3"))
+
+    def test_explicit_one_time_expense_is_not_inferred(self):
+        events = [
+            self.synthetic_event(f"once_{index}", when, "Explicit one-time purchase", "shopping", "expense")
+            for index, when in enumerate((date(2025, 1, 1), date(2025, 1, 8), date(2025, 1, 15)))
+        ]
+        self.assertEqual(self.synthetic_agent(events).recurring_projection("user_test", date(2025, 1, 16), date(2025, 2, 1), "USD"), [])
+
+    def test_explicit_event_deduplicates_same_source_series_only(self):
+        events = [
+            self.synthetic_event("s1", date(2025, 1, 1), "Video streaming plan"),
+            self.synthetic_event("s2", date(2025, 2, 1), "Video streaming plan"),
+            self.synthetic_event("s3", date(2025, 3, 1), "Video streaming plan"),
+            self.synthetic_event("explicit", date(2025, 4, 1), "Video streaming plan"),
+        ]
+        agent = self.synthetic_agent(events)
+        request = {
+            "user_id": "user_test", "request_id": "request_test", "request_date": "2025-03-15",
+            "requested_amount": "1", "desired_completion_date": "2025-04-30",
+            "allows_partial_payment": "false",
+        }
+        projections = agent.projections(request)
+        april = [p for p in projections if p.when == date(2025, 4, 1)]
+        self.assertEqual(len(april), 1)
+        self.assertEqual(april[0].event_id, "explicit")
 
     def test_prediction_modes_are_explicit(self):
         with self.assertRaises(ValueError):

@@ -15,6 +15,7 @@ from evidence_extraction import (
     apply_evidence_fact,
     build_prompt,
     cache_key,
+    validate_evidence_semantics,
 )
 
 
@@ -137,6 +138,33 @@ class EvidenceExtractionTests(unittest.TestCase):
         self.assertEqual(result.state, "applied")
         self.assertEqual(result.cash_effect, "status_only")
         self.assertEqual(result.event_id, "event_1785")
+
+    def test_rejects_contradictory_legacy_action(self):
+        payload = self.message_14_payload()
+        payload["update_status"] = "delayed"
+        payload["action"] = "confirmation"
+        with self.assertRaises(EvidenceValidationError):
+            EvidenceFact.from_mapping(payload)
+
+    def test_pending_and_delayed_follow_source_wording(self):
+        pending = self.message_14_payload()
+        pending["update_status"] = "pending"
+        pending["action"] = "other"
+        pending["supporting_text"] = "The refund is still pending in payment processing."
+        pending_fact = EvidenceFact.from_mapping(pending)
+        validate_evidence_semantics(pending_fact, pending["supporting_text"])
+
+        delayed = self.message_14_payload()
+        delayed["update_status"] = "delayed"
+        delayed["action"] = "delay"
+        delayed_fact = EvidenceFact.from_mapping(delayed)
+        validate_evidence_semantics(delayed_fact, "The refund was initiated but has not reached the account yet.")
+
+        contradictory = dict(pending)
+        contradictory["supporting_text"] = "The refund was initiated but has not reached the account yet."
+        contradictory_fact = EvidenceFact.from_mapping(contradictory)
+        with self.assertRaises(EvidenceValidationError):
+            validate_evidence_semantics(contradictory_fact, contradictory["supporting_text"])
 
     def test_transaction_type_and_update_status_are_independently_validated(self):
         payload = self.message_14_payload()

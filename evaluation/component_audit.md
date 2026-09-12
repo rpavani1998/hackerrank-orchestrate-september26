@@ -32,12 +32,12 @@ adapter tests are not counted as model-quality evidence.
 | AI message extraction | `code/evaluate_messages.py`; `code/evidence_extraction.py`: `OpenRouterAdapter`, `EvidenceExtractor` | Untrusted message content plus authoritative source metadata | Validated `EvidenceFact`, usage/cost/cache metadata | OpenRouter model, structured-output schema, cache | Return source-grounded fields without following embedded instructions; model quality is separate from adapter correctness | Live 19-message quality is measured separately; semantic misses remain |
 | Image extraction / manual image lookup | `code/main.py`: `IMAGE_AMOUNTS`, `Data._events` | `images.csv`, PNG files, event IDs | Event amount from manual map | Hand-transcribed constants; no image library | Read visible amount roles from each supplied image; distinguish total, paid, and due | Automated extraction is **not implemented**; manual lookup covers 16/16 linked images only |
 | Evidence schema validation | `code/evidence_extraction.py`: `EvidenceFact.from_mapping`, `EvidenceDate`, `EvidenceSource` | Structured mapping and source references | Validated fact or `EvidenceValidationError` | Identifier regexes, type/status enums, date/amount checks | Reject malformed identifiers, invalid amounts/currencies/dates, unknown enums, and extra/missing fields | Valid/invalid schema cases verified |
-| Evidence semantic validation | `code/evidence_extraction.py`: `EvidenceFact.from_mapping`, `apply_evidence_fact` | Valid schema fields, action/status/type combinations | Fact/application result | New `transaction_type`, `update_status`, legacy `action` fields | Ensure fields do not contradict one another and preserve unresolved meaning | Semantic consistency is incomplete; contradictory `action=confirmation`, `update_status=delayed` is accepted |
+| Evidence semantic validation | `code/evidence_extraction.py`: `EvidenceFact.from_mapping`, `validate_evidence_semantics`, `apply_evidence_fact` | Valid schema fields, action/status/type combinations, source wording | Fact/application result | New `transaction_type`, `update_status`, legacy `action` fields | Ensure fields do not contradict one another and preserve unresolved meaning | Authoritative status-to-action mapping and pending/delayed source-wording checks are verified |
 | Request-date visibility and scope | `code/main.py`: `Agent.relevant_messages`; `code/evidence_extraction.py`: `apply_evidence_fact`, `load_evidence_facts` | User/request IDs, source sent date, request date, event link | Relevant messages or `not_visible`/scope rejection | Message metadata and source links | Only evidence visible by request date and scoped to user/request may affect a request | Future-date and mismatched-request controlled cases verified |
 | Conflict resolution / lifecycle reconciliation | `code/main.py`: `Event.linked_event_id`, `status_counts_as_cash`, `explicit_projection`; `evidence_extraction.py`: `EvidenceLedger` | Linked event rows, statuses, replacements, refunds, retries, duplicate notices | Cash projections and duplicate application decisions | Event status, links, source precedence | Resolve cancellation, settlement, amendment, replacement, duplicate, retry, and refund lifecycles by explicit precedence | Basic status cases pass; centralized linked-event graph reconciliation is not implemented |
 | Applying evidence to events and recurring streams | `code/evidence_extraction.py`: `apply_evidence_fact`; `code/main.py`: `load_evidence_facts`, `evidence_message_facts`, `evidence_salary_end_dates` | Validated facts, source metadata, event/series context | Status-only application or salary timeline projections | Ledger, visibility, deterministic currency conversion | Apply supported amendments to the correct event/series without double counting; keep unresolved facts inert | Salary timeline application works in tested AI path; generic event/lifecycle mutation is not implemented |
 | Currency conversion | `code/main.py`: `Data._rates`, `Data.convert` | Amount, source/target currency, settlement date | Decimal amount in home currency | Fixed exchange-rate rows | Use fixed dated direct/inverse rate; do not invent live rates | Direct and inverse controlled cases verified; prior-rate fallback remains unverified/ambiguous |
-| Recurrence detection and projection | `code/main.py`: `Agent.cadence`, `recurring_projection` | Historical settled events, category, description, dates, amounts | Future `ProjectionEvent` rows | Cadence thresholds, category grouping, median/upper-quartile policy | Distinguish recurring commitments from one-time events and separate merchants/streams | Separate-merchant controlled case falsely forms one series; confirmed failure |
+| Recurrence detection and projection | `code/main.py`: `Agent.cadence`, `recurrence_series_key`, `recurring_projection` | Historical settled events, category, description, dates, amounts | Future `ProjectionEvent` rows with source IDs | Cadence thresholds, named-stream/category grouping, median/upper-quartile policy | Distinguish recurring commitments from one-time events and separate merchants/streams | Controlled subscription, grocery, one-time, and explicit/inferred duplicate cases verified |
 | Cash-flow replay | `code/main.py`: `Agent.replay` | Starting balance, minimum, dated credits/debits, proposed payments | Safe boolean, minimum seen, daily balances | Projection ordering, credit-before-debit rule | Replay all events/payments and reject any balance below the minimum | Hand-calculated path verified |
 | Safe amount and earliest full-payment date | `code/main.py`: `safe_amount`, `earliest_full` | Explicit projection list, profile balance/minimum, request amount/date | Safe amount and earliest safe date | `replay`; no recurrence inference required by these functions | Compute headroom and first safe payment date from supplied paths | Hand-calculated path verified; broad boundary coverage insufficient |
 | Payment-option generation and eligibility | `code/main.py`: `Option.dates_and_amounts`, `option_allowed`, `plans` | Provider options, profile methods/limits, desired date | Candidate payment schedules | Payment option fields, horizon, preferences | Accept only supplied/user-permitted schedules completing by deadline/horizon | Controlled option schedule and eligibility verified; full competing-plan generation coverage is insufficient |
@@ -50,8 +50,8 @@ adapter tests are not counted as model-quality evidence.
 The diagnostic script produced this summary:
 
 ```text
-Verified for tested cases: 11
-Confirmed failure: 3
+Verified for tested cases: 13
+Confirmed failure: 1
 Not implemented: 4
 Insufficient coverage: 1
 ```
@@ -96,29 +96,21 @@ Actual result: no fact. This is not a forecast failure; it is an unimplemented
 message-extraction case. The AI path covers more categories, but its live model
 quality is scored separately below.
 
-### AI extraction — confirmed semantic quality failures
+### AI extraction — confirmed rejection boundary
 
-The live evaluation used 19 source-backed expectations, no sample affordability
-answers, and the configured model. Results were:
+The live recheck used 19 source-backed expectations, no sample affordability
+answers, the configured model, and the v3/v4 semantic contract. Sixteen facts
+passed schema and semantic validation. Three provider responses were rejected
+for malformed structured content and were not cached or included in the
+validated `facts` list. The validated `message_14` result now follows the source:
+`transaction_type=refund`, `update_status=delayed`, `action=delay`. The evaluator
+records rejected calls, tokens, retries, and cost separately.
 
-```text
-source references 19/19
-transaction_type  18/19
-update_status    18/19
-legacy action    12/19
-amount           19/19
-currency         19/19
-dates            19/19
-recurrence_scope 19/19
-application      19/19
-```
+The remaining confirmed limitation is provider output quality/reliability, not
+silent financial acceptance. Mocked OpenRouter tests verify HTTP/error/cache
+behavior only and are not evidence of extraction quality.
 
-The raw model missed the investment-sale context for `message_15` and labeled
-`message_14` as `refund/pending` instead of `refund/delayed`. These are model
-semantic errors, not schema-adapter failures. Mocked OpenRouter tests verify
-HTTP/error/cache behavior only and are not evidence of extraction quality.
-
-### Evidence schema versus semantic validation — confirmed failure
+### Evidence schema and semantic validation — verified for tested cases
 
 Controlled fact:
 
@@ -130,12 +122,11 @@ Controlled fact:
 }
 ```
 
-`EvidenceFact.from_mapping()` accepts it because each individual enum value is
-valid. The expected result is rejection or an explicit semantic conflict because
-the legacy action contradicts the update status. The defect is in semantic
-validation, not upstream CSV loading or model transport. Downstream impact is
-that a contradictory model fact can reach application classification unless a
-later component compensates.
+`EvidenceFact.from_mapping()` now rejects it. The authoritative mapping is
+implemented for `confirmed`, `amended`, `pending`, `delayed`, `cancelled`,
+`settled`, `not_cash`, `ended`, and unresolved statuses. Source wording also
+rejects a `pending` label when the text only says a credit has not reached the
+account, while explicit waiting/processing language remains pending.
 
 ### Visibility and scope — verified for tested cases
 
@@ -156,22 +147,19 @@ replacement, reversal, retry, duplicate, and source-precedence cases. The link
 alone is not treated as proof of duplicate cash; this remains a missing
 reconciliation component rather than an invented failure expectation.
 
-### Recurrence — confirmed false grouping failure
+### Recurrence — corrected and independently verified
 
-Controlled history:
+Named commitments now use normalized event type/category/direction/flexibility/
+currency/description keys, so two subscriptions in one category remain
+separate. Variable categories such as groceries and transport continue to use a
+category stream, so different merchants are not silently eliminated. Explicit
+one-time markers are excluded, and explicit/inferred deduplication compares the
+same source-defined series rather than category alone. Projection rows retain
+all historical source event IDs.
 
-```text
-2025-01-01 merchant_a / groceries / settled debit / 10 USD
-2025-01-08 merchant_b / groceries / settled debit / 10 USD
-2025-01-15 merchant_c / groceries / settled debit / 10 USD
-```
-
-Expected result: no recurring series, because no merchant has a repeated
-history. Actual result: two projected future events. `recurring_projection()`
-groups debit expenses by category and omits merchant/description from the key.
-This is a recurrence-component defect; it is not caused by currency conversion
-or cash-flow replay. Downstream impact is inflated future expenses, lower safe
-amounts, and potentially later plans.
+Controlled tests cover separate subscriptions, grocery merchants, explicit
+one-time purchases, and an explicit future event colliding with its inferred
+same-series continuation. The salary amendment persistence test remains green.
 
 ### Replay, safe-date, options, and spending changes — narrow contracts pass
 

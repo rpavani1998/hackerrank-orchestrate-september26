@@ -16,6 +16,7 @@ from evidence_extraction import (  # noqa: E402
     EvidenceApplication,
     EvidenceExtractor,
     EvidenceFact,
+    EvidenceValidationError,
     EvidenceLedger,
     EvidenceSource,
     JsonExtractionCache,
@@ -50,15 +51,8 @@ def source_for(row: dict[str, str]) -> EvidenceSource:
 
 
 def expected_action(statuses: list[str]) -> set[str]:
-    result = set()
-    for status in statuses:
-        result.add({
-            "amended": "amendment", "confirmed": "confirmation", "pending": "delay",
-            "delayed": "delay", "disputed": "delay", "cancelled": "cancellation",
-            "settled": "settlement", "not_cash": "non_cash_confirmation",
-            "ended": "amendment", "resumed": "amendment", "unknown": "other",
-        }[status])
-    return result
+    from evidence_extraction import legacy_action_for_status
+    return {legacy_action_for_status(status) for status in statuses}
 
 
 def date_values(fact: EvidenceFact) -> set[str]:
@@ -110,9 +104,40 @@ def run() -> int:
     total_input = 0
     total_output = 0
     total_cost = Decimal(0)
+    provider_calls = 0
+    cache_hits = 0
     for message_id, expected in expectations.items():
         source = source_for(messages[message_id])
-        outcome = extractor.extract(source, config.model)
+        try:
+            outcome = extractor.extract(source, config.model)
+        except (EvidenceValidationError, OpenRouterError) as exc:
+            response = getattr(exc, "provider_response", None)
+            input_tokens = response.input_tokens if response is not None else None
+            output_tokens = response.output_tokens if response is not None else None
+            retries = response.retries if response is not None else 0
+            reported = response.reported_cost_usd if response is not None else None
+            estimated = response.estimated_cost_usd if response is not None else None
+            cost_source = response.cost_source if response is not None else "none"
+            total_input += input_tokens or 0
+            total_output += output_tokens or 0
+            total_cost += reported or estimated or Decimal(0)
+            provider_calls += 1
+            records.append({
+                "message_id": message_id,
+                "rejected": True,
+                "rejection_reason": str(exc),
+                "cache_hit": False,
+                "model_name": config.model,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "retries": retries,
+                "reported_cost_usd": str(reported) if reported is not None else None,
+                "estimated_cost_usd": str(estimated) if estimated is not None else None,
+                "cost_source": cost_source,
+            })
+            continue
+        provider_calls += int(not outcome.cache_hit)
+        cache_hits += int(outcome.cache_hit)
         application = apply_evidence_fact(outcome.fact, source, date.max, ledger)
         fields = compare_fact(outcome.fact, expected, source, application)
         for field, matched in fields.items():
@@ -141,10 +166,10 @@ def run() -> int:
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "message_count": len(records),
         "records": records,
-        "facts": [record["fact"] for record in records],
+        "facts": [record["fact"] for record in records if "fact" in record],
         "usage": {
-            "cache_hits": sum(1 for record in records if record["cache_hit"]),
-            "provider_calls": sum(1 for record in records if not record["cache_hit"]),
+            "cache_hits": cache_hits,
+            "provider_calls": provider_calls,
             "input_tokens": total_input,
             "output_tokens": total_output,
             "total_tokens": total_input + total_output,
@@ -186,7 +211,9 @@ def run() -> int:
         "",
     ]
     for record in records:
-        if record["application"]["state"] != "applied":
+        if record.get("rejected"):
+            lines.append(f"- `{record['message_id']}`: rejected — {record['rejection_reason']}")
+        elif record["application"]["state"] != "applied":
             lines.append(f"- `{record['message_id']}`: {record['application']['state']} — {record['application']['reason']}")
     REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps(payload["usage"], indent=2, sort_keys=True))

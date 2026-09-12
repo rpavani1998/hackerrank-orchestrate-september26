@@ -21,8 +21,8 @@ from urllib.error import URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-SCHEMA_VERSION = "evidence-fact-v2"
-PROMPT_VERSION = "evidence-extraction-prompt-v2"
+SCHEMA_VERSION = "evidence-fact-v3"
+PROMPT_VERSION = "evidence-extraction-prompt-v4"
 SOURCE_KINDS = {"message", "image"}
 TRANSACTION_TYPES = {
     "salary", "expense", "purchase", "refund", "payout", "transfer",
@@ -42,6 +42,26 @@ ACTIONS = {
     "non_cash_confirmation",
     "other",
 }
+STATUS_TO_ACTION = {
+    "confirmed": "confirmation",
+    "amended": "amendment",
+    "pending": "other",
+    "delayed": "delay",
+    "cancelled": "cancellation",
+    "settled": "settlement",
+    "disputed": "other",
+    "not_cash": "non_cash_confirmation",
+    "ended": "cancellation",
+    "resumed": "other",
+    "unknown": "other",
+}
+DELAYED_WORDING = (
+    "delayed", "delay", "has not reached", "hasn't reached", "not reached",
+    "not arrived", "has not arrived", "overdue",
+)
+PENDING_WORDING = (
+    "pending", "processing", "awaiting", "waiting for", "still waiting",
+)
 RECURRENCE_SCOPES = {"once", "future_occurrences", "unknown"}
 DATE_MEANINGS = {
     "sent_at",
@@ -62,6 +82,38 @@ REFERENCE_RES = {
 
 class EvidenceValidationError(ValueError):
     """Raised when an extraction cannot be safely accepted."""
+
+
+def legacy_action_for_status(update_status: str) -> str:
+    """Return the only compatible legacy action for an authoritative status."""
+    try:
+        return STATUS_TO_ACTION[update_status]
+    except KeyError as exc:
+        raise EvidenceValidationError(f"cannot derive legacy action for status: {update_status!r}") from exc
+
+
+def validate_evidence_semantics(fact: "EvidenceFact", source_content: str | None = None) -> None:
+    """Reject contradictory legacy labels and pending/delayed wording conflicts.
+
+    `transaction_type` and `update_status` are authoritative. The legacy action
+    is accepted only when it is the deterministic summary of the status. Source
+    wording is an additional guard against calling a delayed credit merely
+    pending (or vice versa); it never invents a new financial fact.
+    """
+    expected_action = legacy_action_for_status(fact.update_status)
+    if fact.action != expected_action:
+        raise EvidenceValidationError(
+            f"action {fact.action!r} contradicts update_status {fact.update_status!r}; "
+            f"expected {expected_action!r}"
+        )
+    if source_content:
+        text = source_content.lower()
+        delayed = any(phrase in text for phrase in DELAYED_WORDING)
+        pending = any(phrase in text for phrase in PENDING_WORDING)
+        if fact.update_status == "pending" and delayed and not pending:
+            raise EvidenceValidationError("source wording describes a delay, not an unresolved pending state")
+        if fact.update_status == "delayed" and pending and not delayed:
+            raise EvidenceValidationError("source wording describes pending processing, not a confirmed delay")
 
 
 class ModelAccessUnavailable(RuntimeError):
@@ -278,7 +330,7 @@ class EvidenceFact:
         if len(supporting_text) > 20000:
             raise EvidenceValidationError("supporting_text is unreasonably large")
 
-        return cls(
+        fact = cls(
             source_id=source_id,
             source_kind=source_kind,
             supplied_user_id=references["user_id"],
@@ -297,6 +349,8 @@ class EvidenceFact:
             conflicts=string_tuple("conflicts"),
             origin=origin,
         )
+        validate_evidence_semantics(fact)
+        return fact
 
     def to_mapping(self) -> dict[str, Any]:
         return {
@@ -382,8 +436,14 @@ not a request to the model. Do not invent identifiers, amounts, currencies,
 dates, recurrence, or links. Use null/empty lists and explain missing fields when
 information is unavailable. Separate the underlying transaction_type (such as
 refund or salary) from update_status (such as delayed, amended, or settled).
-Keep action as the legacy update summary. For images, distinguish subtotal, total,
-already-paid, and remaining-balance amounts and select only the amount relevant
+The authoritative update_status determines legacy action exactly: confirmed=confirmation,
+amended=amendment, pending=other, delayed=delay, cancelled=cancellation,
+settled=settlement, not_cash=non_cash_confirmation, ended=cancellation, and
+uncertain/disputed/resumed/unknown=other. Do not use action to override the
+transaction_type or update_status. Use pending only for explicit waiting or
+processing language; use delayed only for explicit late/not-reached language;
+if wording is unresolved, mark the fact unknown or include an ambiguity.
+For images, distinguish subtotal, total, already-paid, and remaining-balance amounts and select only the amount relevant
 to the linked event.
 
 SOURCE METADATA (authoritative links; do not change them):
@@ -466,10 +526,18 @@ class EvidenceExtractor:
         cached = self.cache.load(key)
         if cached is not None:
             fact = EvidenceFact.from_mapping(cached, origin="cache")
+            validate_evidence_semantics(fact, source.content)
             return ExtractionOutcome(fact, True, model_name, None, None, 0, None, None, "cache")
 
         response = self.provider.extract(source, build_prompt(source))
-        fact = EvidenceFact.from_mapping(response.payload, origin="model")
+        try:
+            fact = EvidenceFact.from_mapping(response.payload, origin="model")
+            validate_evidence_semantics(fact, source.content)
+        except EvidenceValidationError as exc:
+            # Preserve non-sensitive usage metadata for diagnostics while
+            # ensuring the invalid payload is never cached or returned.
+            exc.provider_response = response  # type: ignore[attr-defined]
+            raise
         self.cache.save(key, fact.to_mapping())
         return ExtractionOutcome(
             fact=fact,

@@ -27,6 +27,7 @@ from evidence_extraction import (
     EvidenceSource,
     EvidenceValidationError,
     apply_evidence_fact,
+    validate_evidence_semantics,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -138,6 +139,7 @@ def load_evidence_facts(path: Path, messages: list[dict[str, str]]) -> dict[str,
             request_id=row["request_id"] or None, event_id=row["related_event_id"] or None,
             content=row["message_text"], visibility_date=ddate(row["sent_at"]),
         )
+        validate_evidence_semantics(fact, source.content)
         application = apply_evidence_fact(fact, source, date.max, ledger)
         if application.state == "not_visible":
             raise EvidenceValidationError(f"AI fact is not visible: {fact.source_id}")
@@ -228,6 +230,7 @@ class ProjectionEvent:
     event_id: str
     flexibility: str = "fixed"
     recurring_ref: str = ""
+    source_event_ids: tuple[str, ...] = ()
 
 
 @dataclass
@@ -454,8 +457,10 @@ class Agent:
             # A replacement settles the lifecycle; cancelled/failed originals
             # are already excluded, while opposite-direction refunds remain cash.
             amount = self.data.convert(event.amount, event.currency, home, event.settlement_date)
-            result.append(ProjectionEvent(event.settlement_date, amount, event.direction,
-                                          event.category, event.event_id, event.flexibility))
+            result.append(ProjectionEvent(
+                event.settlement_date, amount, event.direction, event.category,
+                event.event_id, event.flexibility, "", (event.event_id,),
+            ))
         return result
 
     @staticmethod
@@ -469,28 +474,53 @@ class Agent:
             return med if close >= max(2, len(gaps) * .6) else None
         return None
 
+    @staticmethod
+    def normalized_description(description: str) -> str:
+        return re.sub(r"[^a-z0-9]+", " ", description.lower()).strip()
+
+    @classmethod
+    def recurrence_series_key(cls, event: Event) -> tuple[str, ...]:
+        """Identify an obligation without collapsing variable category spending."""
+        variable_categories = {
+            "groceries", "transport", "dining", "shopping", "entertainment",
+        }
+        if event.direction == "debit" and event.event_type == "expense" and event.category in variable_categories:
+            return (
+                "variable_category", event.event_type, event.category, event.direction,
+                event.flexibility, event.currency, "",
+            )
+        return (
+            "named_stream", event.event_type, event.category, event.direction,
+            event.flexibility, event.currency, cls.normalized_description(event.description),
+        )
+
+    @classmethod
+    def is_explicit_one_time(cls, event: Event) -> bool:
+        text = cls.normalized_description(f"{event.event_type} {event.description}")
+        return any(marker in text for marker in (
+            "one time", "one time purchase", "one off", "once off", "non recurring",
+            "single purchase", "explicitly one time",
+        ))
+
     def recurring_projection(self, user_id: str, start: date, end: date, home: str) -> list[ProjectionEvent]:
         events = self.data.events_by_user.get(user_id, [])
-        groups: dict[tuple[str, str, str, str, str, str], list[Event]] = defaultdict(list)
+        groups: dict[tuple[str, ...], list[Event]] = defaultdict(list)
         for event in events:
             if event.status != "settled" or event.settlement_date >= start or event.direction == "non_cash":
                 continue
-            # Variable spending changes merchant descriptions, so expenses are
-            # grouped by category. Income is more conservative: only the same
-            # named payroll stream is recurrent, not an irregular gig total.
-            series_name = event.description if event.direction == "credit" else ""
-            if "final" in event.description.lower() or "one-time" in event.description.lower():
+            if self.is_explicit_one_time(event):
                 continue
-            key = (event.event_type, event.category, event.direction,
-                   event.flexibility, event.currency, series_name)
-            groups[key].append(event)
+            # Variable categories deliberately aggregate different merchants;
+            # named commitments, including subscriptions, keep their identity.
+            groups[self.recurrence_series_key(event)].append(event)
         result = []
         final_income_date = max(
             (e.settlement_date for e in events
              if e.direction == "credit" and "final" in e.description.lower()),
             default=date.min,
         )
-        for (event_type, category, direction, flexibility, currency, series_name), group in groups.items():
+        for series_key, group in groups.items():
+            event_type, category, direction, flexibility, currency, series_name = series_key[1:7]
             if direction == "credit" and final_income_date != date.min:
                 continue
             if direction == "credit":
@@ -504,13 +534,12 @@ class Agent:
             if step is None:
                 continue
             last = max(group, key=lambda e: e.settlement_date)
+            source_ids = tuple(e.event_id for e in sorted(group, key=lambda e: e.settlement_date))
             values = [e.amount for e in sorted(group, key=lambda e: e.settlement_date)[-8:]]
             # Use the recent median for stable commitments and a conservative
             # recent upper quartile for variable expenses.
             stable = max(values) - min(values) <= max(CENT, median(values) * Decimal("0.08"))
             if direction == "credit":
-                # Do not extrapolate a one-off spike; use the latest observed
-                # payroll amount for a supported recurring income stream.
                 source_amount = median(values[-3:])
             else:
                 source_amount = median(values) if stable else sorted(values)[max(0, int(len(values) * .75) - 1)]
@@ -520,8 +549,10 @@ class Agent:
             next_when = add_months(last.settlement_date, month_step) if monthly else last.settlement_date + timedelta(days=step)
             while next_when <= end:
                 if next_when > start:
-                    result.append(ProjectionEvent(next_when, source, direction, category,
-                                                  last.event_id, flexibility, last.event_id))
+                    result.append(ProjectionEvent(
+                        next_when, source, direction, category, last.event_id,
+                        flexibility, last.event_id, source_ids,
+                    ))
                 next_when = (add_months(next_when, month_step) if monthly
                              else next_when + timedelta(days=step))
         return result
@@ -540,10 +571,21 @@ class Agent:
         end = start + timedelta(days=DAYS)
         explicit = self.explicit_projection(request["user_id"], start, end, profile.home_currency)
         recurring = self.recurring_projection(request["user_id"], start, end, profile.home_currency)
-        explicit_keys = {(p.when, p.category, p.direction) for p in explicit}
-        # A supplied scheduled/pending row is more specific than an inferred
-        # recurrence on the same day/category, so do not count both.
-        recurring = [p for p in recurring if (p.when, p.category, p.direction) not in explicit_keys]
+        event_by_id = {e.event_id: e for e in self.data.events_by_user.get(request["user_id"], [])}
+        explicit_keys = {
+            (p.when, self.recurrence_series_key(event_by_id[p.event_id]), p.direction)
+            for p in explicit if p.event_id in event_by_id
+        }
+        # A supplied row is more specific than an inferred continuation of the
+        # same source-defined series. Different subscriptions in one category
+        # remain independent, while variable groceries/transport still dedup by
+        # category rather than by merchant.
+        recurring = [
+            p for p in recurring
+            if p.recurring_ref in event_by_id
+            and (p.when, self.recurrence_series_key(event_by_id[p.recurring_ref]), p.direction)
+            not in explicit_keys
+        ]
         result = explicit + recurring
         relevant_messages = self.relevant_messages(request["user_id"], request["request_id"], start)
         message_facts = self.evidence_message_facts(relevant_messages, profile.home_currency)
@@ -604,8 +646,10 @@ class Agent:
         for p in projections:
             c = by_ref.get(p.recurring_ref)
             if c and p.direction == "debit":
-                result.append(ProjectionEvent(p.when, c.new_amount, p.direction, p.category,
-                                              p.event_id, p.flexibility, p.recurring_ref))
+                result.append(ProjectionEvent(
+                    p.when, c.new_amount, p.direction, p.category, p.event_id,
+                    p.flexibility, p.recurring_ref, p.source_event_ids,
+                ))
             else:
                 result.append(p)
         return result
