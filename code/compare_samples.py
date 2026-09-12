@@ -8,6 +8,7 @@ Run it from the repository root with:
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import sys
 from collections import defaultdict
@@ -19,7 +20,7 @@ CODE_DIR = Path(__file__).resolve().parent
 ROOT = CODE_DIR.parent
 sys.path.insert(0, str(CODE_DIR))
 
-from main import Agent, Data, ProjectionEvent, dec, ddate, fmt_amount  # noqa: E402
+from main import Agent, Data, ProjectionEvent, dec, ddate, fmt_amount, load_evidence_facts  # noqa: E402
 
 COMPARE_FIELDS = [
     "amount_safe_to_pay",
@@ -305,9 +306,17 @@ def trace_request_02(data: Data, agent: Agent, samples: list[dict[str, str]]) ->
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Compare deterministic or AI-enabled predictions read-only")
+    parser.add_argument("--mode", choices=["deterministic", "ai"], default="deterministic")
+    parser.add_argument("--evidence-file", type=Path,
+                        default=ROOT / "evaluation/message_extraction_results.json")
+    args = parser.parse_args()
     data = Data()
+    if args.mode == "ai":
+        data.evidence_facts = load_evidence_facts(args.evidence_file, data.messages)
     agent = Agent(data)
     samples = load_samples()
+    print(f"mode: {args.mode}")
     compare_samples(data, agent, samples)
     trace_request_02(data, agent, samples)
 

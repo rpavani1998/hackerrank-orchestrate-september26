@@ -27,6 +27,8 @@ PAYLOAD = {
     "supplied_user_id": "user_20",
     "supplied_request_id": "request_20",
     "supplied_event_id": "event_1785",
+    "transaction_type": "refund",
+    "update_status": "delayed",
     "action": "delay",
     "amount": None,
     "currency": None,

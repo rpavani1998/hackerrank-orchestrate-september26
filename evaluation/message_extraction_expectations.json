@@ -1,0 +1,367 @@
+{
+  "message_01": {
+    "amount": "42750000",
+    "application": "amend recurring salary from effective date",
+    "currency": "IDR",
+    "dates": [
+      {
+        "date": "2025-08-15",
+        "meaning": "effective_date"
+      }
+    ],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "future_occurrences"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "amended"
+    ]
+  },
+  "message_02": {
+    "amount": null,
+    "application": "no cash amount/date to apply",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "unresolved",
+    "recurrence_scope": [
+      "unknown",
+      "once"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "confirmed"
+    ]
+  },
+  "message_03": {
+    "amount": null,
+    "application": "exclude unapproved bonus",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "unresolved",
+    "recurrence_scope": [
+      "unknown",
+      "once"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "pending"
+    ]
+  },
+  "message_04": {
+    "amount": "1037.52",
+    "application": "amend recurring salary when no date is supplied",
+    "currency": "EUR",
+    "dates": [],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "future_occurrences",
+      "once"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "amended"
+    ]
+  },
+  "message_05": {
+    "amount": null,
+    "application": "amend salary payment date only",
+    "currency": null,
+    "dates": [
+      {
+        "date": "2024-09-23",
+        "meaning": "payment_date"
+      }
+    ],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "future_occurrences",
+      "once"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "amended"
+    ]
+  },
+  "message_06": {
+    "amount": "1422.85",
+    "application": "amend salary amount when no date is supplied",
+    "currency": "EUR",
+    "dates": [],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "future_occurrences",
+      "once"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "amended"
+    ]
+  },
+  "message_07": {
+    "amount": null,
+    "application": "exclude pending payout",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "unresolved",
+    "recurrence_scope": [
+      "unknown",
+      "once"
+    ],
+    "transaction_type": [
+      "payout"
+    ],
+    "update_status": [
+      "pending"
+    ]
+  },
+  "message_08": {
+    "amount": "38760000",
+    "application": "confirmed salary amount without invented date",
+    "currency": "IDR",
+    "dates": [],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "unknown",
+      "once",
+      "future_occurrences"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "confirmed"
+    ]
+  },
+  "message_09": {
+    "amount": null,
+    "application": "stop future salary estimates",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "future_occurrences",
+      "unknown"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "ended"
+    ]
+  },
+  "message_10": {
+    "amount": "2717",
+    "application": "amend recurring salary from resume date",
+    "currency": "EUR",
+    "dates": [
+      {
+        "date": "2025-08-15",
+        "meaning": "effective_date"
+      },
+      {
+        "date": "2025-08-15",
+        "meaning": "payment_date"
+      }
+    ],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "future_occurrences"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "resumed",
+      "confirmed"
+    ]
+  },
+  "message_106": {
+    "amount": null,
+    "application": "do not cancel or add reversal before posted",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "unresolved",
+    "recurrence_scope": [
+      "once",
+      "unknown"
+    ],
+    "transaction_type": [
+      "purchase",
+      "expense"
+    ],
+    "update_status": [
+      "disputed",
+      "pending",
+      "delayed"
+    ]
+  },
+  "message_11": {
+    "amount": "1661",
+    "application": "project confirmed first salary only",
+    "currency": "EUR",
+    "dates": [
+      {
+        "date": "2026-01-15",
+        "meaning": "payment_date"
+      }
+    ],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "once",
+      "future_occurrences"
+    ],
+    "transaction_type": [
+      "salary"
+    ],
+    "update_status": [
+      "confirmed"
+    ]
+  },
+  "message_12": {
+    "amount": null,
+    "application": "record rent percentage amendment as unresolved amount",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "unresolved",
+    "recurrence_scope": [
+      "future_occurrences",
+      "unknown"
+    ],
+    "transaction_type": [
+      "rent",
+      "expense"
+    ],
+    "update_status": [
+      "amended"
+    ]
+  },
+  "message_13": {
+    "amount": null,
+    "application": "status-only; do not create cash",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "unresolved",
+    "recurrence_scope": [
+      "once",
+      "unknown"
+    ],
+    "transaction_type": [
+      "transfer"
+    ],
+    "update_status": [
+      "confirmed",
+      "settled"
+    ]
+  },
+  "message_14": {
+    "amount": null,
+    "application": "unresolved; do not create refund income",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "unresolved",
+    "recurrence_scope": [
+      "once",
+      "unknown"
+    ],
+    "transaction_type": [
+      "refund"
+    ],
+    "update_status": [
+      "delayed"
+    ]
+  },
+  "message_15": {
+    "amount": null,
+    "application": "exclude unrealized value",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "once",
+      "unknown"
+    ],
+    "transaction_type": [
+      "investment_sale"
+    ],
+    "update_status": [
+      "not_cash"
+    ]
+  },
+  "message_16": {
+    "amount": null,
+    "application": "exclude uncredited prize",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "unresolved",
+    "recurrence_scope": [
+      "once",
+      "unknown"
+    ],
+    "transaction_type": [
+      "prize"
+    ],
+    "update_status": [
+      "pending",
+      "delayed"
+    ]
+  },
+  "message_17": {
+    "amount": null,
+    "application": "status-only; do not add money already reflected in events",
+    "currency": null,
+    "dates": [],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "once",
+      "unknown"
+    ],
+    "transaction_type": [
+      "prize"
+    ],
+    "update_status": [
+      "settled",
+      "confirmed"
+    ]
+  },
+  "message_35": {
+    "amount": null,
+    "application": "status-only; receipt amount is not stated",
+    "currency": "INR",
+    "dates": [
+      {
+        "date": "2026-07-24",
+        "meaning": "event_date"
+      },
+      {
+        "date": "2026-07-24",
+        "meaning": "settlement_date"
+      }
+    ],
+    "expected_application_state": "applied",
+    "recurrence_scope": [
+      "once",
+      "unknown"
+    ],
+    "transaction_type": [
+      "expense",
+      "purchase"
+    ],
+    "update_status": [
+      "settled",
+      "confirmed"
+    ]
+  }
+}

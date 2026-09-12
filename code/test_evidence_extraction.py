@@ -39,6 +39,8 @@ class EvidenceExtractionTests(unittest.TestCase):
             "supplied_user_id": "user_20",
             "supplied_request_id": "request_20",
             "supplied_event_id": "event_1785",
+            "transaction_type": "refund",
+            "update_status": "delayed",
             "action": "delay",
             "amount": None,
             "currency": None,
@@ -52,6 +54,8 @@ class EvidenceExtractionTests(unittest.TestCase):
 
     def test_validates_linked_delayed_refund_without_inventing_amount(self):
         fact = EvidenceFact.from_mapping(self.message_14_payload())
+        self.assertEqual(fact.transaction_type, "refund")
+        self.assertEqual(fact.update_status, "delayed")
         self.assertEqual(fact.action, "delay")
         self.assertIsNone(fact.amount)
         self.assertEqual(fact.supplied_event_id, "event_1785")
@@ -99,6 +103,12 @@ class EvidenceExtractionTests(unittest.TestCase):
         ledger.add(fact)
         with self.assertRaises(DuplicateEvidenceError):
             ledger.add(same_source)
+        different_label = self.message_14_payload()
+        different_label["transaction_type"] = "purchase"
+        different_label["update_status"] = "cancelled"
+        different_label["action"] = "cancellation"
+        with self.assertRaises(DuplicateEvidenceError):
+            ledger.add(EvidenceFact.from_mapping(different_label, origin="deterministic"))
         self.assertEqual(len(ledger), 1)
 
     def test_delayed_refund_stays_unresolved_without_cash_effect(self):
@@ -108,15 +118,35 @@ class EvidenceExtractionTests(unittest.TestCase):
         self.assertEqual(result.state, "unresolved")
         self.assertEqual(result.cash_effect, "none")
 
+    def test_future_message_is_not_visible_on_request_date(self):
+        source = EvidenceSource(**{**self.message_14_source().__dict__, "visibility_date": date(2026, 2, 8)})
+        fact = EvidenceFact.from_mapping(self.message_14_payload())
+        ledger = EvidenceLedger()
+        result = apply_evidence_fact(fact, source, date(2026, 2, 7), ledger)
+        self.assertEqual(result.state, "not_visible")
+        self.assertEqual(len(ledger), 0)
+
     def test_visible_status_fact_applies_without_cash_mutation(self):
         source = EvidenceSource(**{**self.message_14_source().__dict__, "visibility_date": date(2026, 2, 6)})
         payload = self.message_14_payload()
+        payload["transaction_type"] = "purchase"
+        payload["update_status"] = "cancelled"
         payload["action"] = "cancellation"
         fact = EvidenceFact.from_mapping(payload)
         result = apply_evidence_fact(fact, source, date(2026, 2, 7), EvidenceLedger())
         self.assertEqual(result.state, "applied")
         self.assertEqual(result.cash_effect, "status_only")
         self.assertEqual(result.event_id, "event_1785")
+
+    def test_transaction_type_and_update_status_are_independently_validated(self):
+        payload = self.message_14_payload()
+        payload["transaction_type"] = "not_a_transaction"
+        with self.assertRaises(EvidenceValidationError):
+            EvidenceFact.from_mapping(payload)
+        payload = self.message_14_payload()
+        payload["update_status"] = "not_a_status"
+        with self.assertRaises(EvidenceValidationError):
+            EvidenceFact.from_mapping(payload)
 
     def test_unavailable_provider_is_explicit(self):
         with self.assertRaises(ModelAccessUnavailable):

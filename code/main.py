@@ -9,6 +9,7 @@ used. Arithmetic, forecasting, plan selection, and validation are deterministic.
 from __future__ import annotations
 
 import csv
+import json
 import re
 import sys
 from collections import defaultdict
@@ -19,6 +20,14 @@ from itertools import combinations
 from pathlib import Path
 from statistics import median
 from typing import Iterable
+
+from evidence_extraction import (
+    EvidenceFact,
+    EvidenceLedger,
+    EvidenceSource,
+    EvidenceValidationError,
+    apply_evidence_fact,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "dataset"
@@ -102,6 +111,38 @@ def fmt_amount(value: Decimal) -> str:
 def csv_rows(name: str) -> list[dict[str, str]]:
     with (DATASET / name).open(newline="", encoding="utf-8") as fh:
         return list(csv.DictReader(fh))
+
+
+def load_evidence_facts(path: Path, messages: list[dict[str, str]]) -> dict[str, EvidenceFact]:
+    """Load only facts matching supplied message metadata and validate their scope."""
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    raw_facts = payload.get("facts") if isinstance(payload, dict) else payload
+    if not isinstance(raw_facts, list):
+        raise EvidenceValidationError("AI evidence file must contain a facts list")
+    message_by_id = {row["message_id"]: row for row in messages}
+    ledger = EvidenceLedger()
+    result: dict[str, EvidenceFact] = {}
+    for raw in raw_facts:
+        fact = EvidenceFact.from_mapping(raw, origin="ai-cache")
+        row = message_by_id.get(fact.source_id)
+        if row is None or fact.source_kind != "message":
+            raise EvidenceValidationError(f"AI fact references an unsupplied message: {fact.source_id}")
+        if (
+            fact.supplied_user_id != row["user_id"]
+            or fact.supplied_request_id != (row["request_id"] or None)
+            or fact.supplied_event_id != (row["related_event_id"] or None)
+        ):
+            raise EvidenceValidationError(f"AI fact references disagree with {fact.source_id} metadata")
+        source = EvidenceSource(
+            source_id=row["message_id"], source_kind="message", user_id=row["user_id"],
+            request_id=row["request_id"] or None, event_id=row["related_event_id"] or None,
+            content=row["message_text"], visibility_date=ddate(row["sent_at"]),
+        )
+        application = apply_evidence_fact(fact, source, date.max, ledger)
+        if application.state == "not_visible":
+            raise EvidenceValidationError(f"AI fact is not visible: {fact.source_id}")
+        result[fact.source_id] = fact
+    return result
 
 
 @dataclass
@@ -207,7 +248,8 @@ class Plan:
 
 
 class Data:
-    def __init__(self) -> None:
+    def __init__(self, evidence_facts: dict[str, EvidenceFact] | None = None) -> None:
+        self.evidence_facts = evidence_facts or {}
         self.profiles = self._profiles()
         self.requests = csv_rows("requests.csv")
         self.events = self._events()
@@ -348,6 +390,51 @@ class Agent:
                 facts.append((when, value, "message payroll"))
         return facts
 
+    def evidence_message_facts(self, messages: Iterable[dict[str, str]], home_currency: str) -> list[tuple[date, Decimal, str]]:
+        """Convert validated AI salary facts into the existing projection tuple shape."""
+        facts: list[tuple[date, Decimal, str]] = []
+        for message in messages:
+            fact = self.data.evidence_facts.get(message["message_id"])
+            if fact is None:
+                facts.extend(self.message_facts([message], home_currency))
+                continue
+            # A validated non-salary fact is consumed as evidence but cannot
+            # create salary cash. It is intentionally not sent through the
+            # deterministic parser, preventing duplicate interpretation.
+            if fact.transaction_type != "salary":
+                continue
+            if fact.update_status == "ended":
+                continue
+            if fact.update_status not in {"amended", "confirmed", "resumed"} or fact.amount is None:
+                continue
+            date_by_meaning = {item.meaning: item.value for item in fact.dates}
+            when = (
+                date_by_meaning.get("effective_date")
+                or date_by_meaning.get("payment_date")
+                or date_by_meaning.get("settlement_date")
+                or date_by_meaning.get("completion_date")
+                or ddate(message["sent_at"])
+            )
+            if when is None or fact.currency is None:
+                continue
+            try:
+                amount = self.data.convert(fact.amount, fact.currency, home_currency, when)
+            except ValueError:
+                # No fixed rate means the fact is validated but not financially applied.
+                continue
+            facts.append((when, amount, "message evidence"))
+        return facts
+
+    def evidence_salary_end_dates(self, messages: Iterable[dict[str, str]]) -> list[date]:
+        return [
+            ddate(message["sent_at"])
+            for message in messages
+            if self.data.evidence_facts.get(message["message_id"]) is not None
+            and self.data.evidence_facts[message["message_id"]].transaction_type == "salary"
+            and self.data.evidence_facts[message["message_id"]].update_status == "ended"
+            and ddate(message["sent_at"]) is not None
+        ]
+
     @staticmethod
     def status_counts_as_cash(event: Event) -> bool:
         if event.status in {"failed", "cancelled", "unrealized"}:
@@ -440,7 +527,7 @@ class Agent:
         return result
 
     def salary_message_projection(self, user_id: str, request_id: str, start: date, end: date, home: str) -> list[ProjectionEvent]:
-        facts = self.message_facts(self.relevant_messages(user_id, request_id, start), home)
+        facts = self.evidence_message_facts(self.relevant_messages(user_id, request_id, start), home)
         result = []
         for when, amount, _ in facts:
             if start < when <= end:
@@ -458,10 +545,14 @@ class Agent:
         # recurrence on the same day/category, so do not count both.
         recurring = [p for p in recurring if (p.when, p.category, p.direction) not in explicit_keys]
         result = explicit + recurring
-        message_facts = self.message_facts(
-            self.relevant_messages(request["user_id"], request["request_id"], start),
-            profile.home_currency,
-        )
+        relevant_messages = self.relevant_messages(request["user_id"], request["request_id"], start)
+        message_facts = self.evidence_message_facts(relevant_messages, profile.home_currency)
+        ended_dates = self.evidence_salary_end_dates(relevant_messages)
+        if ended_dates:
+            result = [
+                p for p in result
+                if not (p.category == "salary" and any(p.when > ended for ended in ended_dates))
+            ]
         message_salary = [
             ProjectionEvent(when, amount, "credit", "salary", "message_payroll")
             for when, amount, _ in message_facts
@@ -751,10 +842,13 @@ def validate(rows: list[dict[str, str]], requests: list[dict[str, str]], options
                 assert token.startswith("stop:") or token.startswith("reduce_to:")
 
 
-def main(mode: str = "deterministic") -> None:
-    if mode != "deterministic":
-        raise ValueError(f"unsupported mode: {mode}; only deterministic mode is available")
+def main(mode: str = "deterministic", evidence_path: Path | None = None) -> None:
+    if mode not in {"deterministic", "ai"}:
+        raise ValueError(f"unsupported mode: {mode}; use deterministic or ai")
     data = Data()
+    if mode == "ai":
+        path = evidence_path or ROOT / "evaluation/message_extraction_results.json"
+        data.evidence_facts = load_evidence_facts(path, data.messages)
     agent = Agent(data)
     rows = [agent.decide(request) for request in data.requests]
     validate(rows, data.requests, data.options)
@@ -768,6 +862,9 @@ def main(mode: str = "deterministic") -> None:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Run the deterministic Buy or Wait? agent")
-    parser.add_argument("--mode", choices=["deterministic"], default="deterministic")
-    main(parser.parse_args().mode)
+    parser = argparse.ArgumentParser(description="Run the Buy or Wait? agent")
+    parser.add_argument("--mode", choices=["deterministic", "ai"], default="deterministic")
+    parser.add_argument("--evidence-file", type=Path,
+                        default=ROOT / "evaluation/message_extraction_results.json")
+    args = parser.parse_args()
+    main(args.mode, args.evidence_file)

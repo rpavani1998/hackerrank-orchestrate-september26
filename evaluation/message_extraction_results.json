@@ -1,0 +1,1399 @@
+{
+  "facts": [
+    {
+      "action": "amendment",
+      "ambiguities": [],
+      "amount": "42750000",
+      "conflicts": [],
+      "currency": "IDR",
+      "dates": [
+        {
+          "date": "2025-08-15",
+          "meaning": "effective_date"
+        }
+      ],
+      "missing_fields": [],
+      "recurrence_scope": "future_occurrences",
+      "source_id": "message_01",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": null,
+      "supplied_user_id": "user_02",
+      "supporting_text": "Rincian penggajian Anda di Cobalt Systems telah berubah. Gaji bulanan Anda naik menjadi IDR 42750000. Perubahan ini berlaku mulai 2025-08-15.",
+      "transaction_type": "salary",
+      "update_status": "amended"
+    },
+    {
+      "action": "confirmation",
+      "ambiguities": [
+        "Specific payment amount and exact payroll dates are not provided."
+      ],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "unknown",
+      "source_id": "message_02",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_03",
+      "supplied_user_id": "user_03",
+      "supporting_text": "Gaji rutin untuk penggajian berikutnya sudah dikonfirmasi. Slip gaji berikutnya akan menampilkan gaji rutin dan penyesuaian satu kali secara terpisah. Ref payroll EMP-0002.",
+      "transaction_type": "salary",
+      "update_status": "confirmed"
+    },
+    {
+      "action": "amendment",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "payment_date"
+      ],
+      "recurrence_scope": "unknown",
+      "source_id": "message_03",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_04",
+      "supplied_user_id": "user_04",
+      "supporting_text": "Rincian penggajian Anda di Greenfield Foods telah berubah. Bonus kuartalan Anda masih menunggu hasil akhir penilaian kinerja. Jumlah akhir dan tanggal pembayaran belum disetujui. Kami akan mengirim pembaruan setelah tim payroll mengonfirmasi jumlah dan tanggalnya. Ref payroll EMP-0003.",
+      "transaction_type": "salary",
+      "update_status": "pending"
+    },
+    {
+      "action": "amendment",
+      "ambiguities": [],
+      "amount": "1037.52",
+      "conflicts": [],
+      "currency": "EUR",
+      "dates": [],
+      "missing_fields": [
+        "dates",
+        "supplied_event_id"
+      ],
+      "recurrence_scope": "future_occurrences",
+      "source_id": "message_04",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_06",
+      "supplied_user_id": "user_06",
+      "supporting_text": "Your temporary monthly pay is EUR 1037.52. The reduced amount continues for the next payroll. This is the amount currently scheduled for the affected pay cycle.",
+      "transaction_type": "salary",
+      "update_status": "amended"
+    },
+    {
+      "action": "amendment",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [
+        {
+          "date": "2024-09-23",
+          "meaning": "payment_date"
+        }
+      ],
+      "missing_fields": [
+        "amount",
+        "currency"
+      ],
+      "recurrence_scope": "once",
+      "source_id": "message_05",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": null,
+      "supplied_user_id": "user_07",
+      "supporting_text": "BrightPath Media has updated your payroll record. Your confirmed salary is now expected on 2024-09-23. This replaces the payroll date shown in the earlier update.",
+      "transaction_type": "salary",
+      "update_status": "amended"
+    },
+    {
+      "action": "amendment",
+      "ambiguities": [],
+      "amount": "1422.85",
+      "conflicts": [],
+      "currency": "EUR",
+      "dates": [],
+      "missing_fields": [
+        "dates"
+      ],
+      "recurrence_scope": "once",
+      "source_id": "message_06",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_08",
+      "supplied_user_id": "user_08",
+      "supporting_text": "Your next salary is reduced to EUR 1422.85. The adjustment is due to approved unpaid leave.",
+      "transaction_type": "salary",
+      "update_status": "amended"
+    },
+    {
+      "action": "other",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "once",
+      "source_id": "message_07",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_10",
+      "supplied_user_id": "user_10",
+      "supporting_text": "The next QuickCrew payout is still pending. The weekly earnings shown in the QuickCrew app can change until the payout is closed.",
+      "transaction_type": "payout",
+      "update_status": "pending"
+    },
+    {
+      "action": "confirmation",
+      "ambiguities": [],
+      "amount": "38760000",
+      "conflicts": [],
+      "currency": "IDR",
+      "dates": [],
+      "missing_fields": [
+        "dates"
+      ],
+      "recurrence_scope": "unknown",
+      "source_id": "message_08",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_11",
+      "supplied_user_id": "user_11",
+      "supporting_text": "Berikut informasi penggajian terbaru dari Greenfield Foods. Gaji pokok yang dikonfirmasi adalah IDR 38760000. Komisi dari transaksi yang masih berjalan belum disetujui. Transaksi yang masih berjalan tidak masuk pembayaran sampai komisinya dinyatakan diperoleh. Ref payroll EMP-0008.",
+      "transaction_type": "salary",
+      "update_status": "confirmed"
+    },
+    {
+      "action": "cancellation",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "future_occurrences",
+      "source_id": "message_09",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": null,
+      "supplied_user_id": "user_12",
+      "supporting_text": "The current seasonal contract has ended. No off-season income or renewal has been confirmed.",
+      "transaction_type": "salary",
+      "update_status": "ended"
+    },
+    {
+      "action": "other",
+      "ambiguities": [],
+      "amount": "2717",
+      "conflicts": [],
+      "currency": "EUR",
+      "dates": [
+        {
+          "date": "2025-08-15",
+          "meaning": "effective_date"
+        }
+      ],
+      "missing_fields": [
+        "supplied_request_id",
+        "supplied_event_id"
+      ],
+      "recurrence_scope": "future_occurrences",
+      "source_id": "message_10",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": null,
+      "supplied_user_id": "user_14",
+      "supporting_text": "Regular salary of EUR 2717 resumes on 2025-08-15.",
+      "transaction_type": "salary",
+      "update_status": "resumed"
+    },
+    {
+      "action": "other",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "unknown",
+      "source_id": "message_106",
+      "source_kind": "message",
+      "supplied_event_id": "event_12709",
+      "supplied_request_id": null,
+      "supplied_user_id": "user_138",
+      "supporting_text": "The extra card charge is still being investigated. A reversal has not been posted to the account yet. The dispute is open and no reversal has been posted yet.",
+      "transaction_type": "expense",
+      "update_status": "disputed"
+    },
+    {
+      "action": "confirmation",
+      "ambiguities": [],
+      "amount": "1661",
+      "conflicts": [],
+      "currency": "EUR",
+      "dates": [
+        {
+          "date": "2026-01-15",
+          "meaning": "payment_date"
+        }
+      ],
+      "missing_fields": [],
+      "recurrence_scope": "once",
+      "source_id": "message_11",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_15",
+      "supplied_user_id": "user_15",
+      "supporting_text": "Your first salary will be EUR 1661. The confirmed credit date is 2026-01-15.",
+      "transaction_type": "salary",
+      "update_status": "confirmed"
+    },
+    {
+      "action": "amendment",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "future_occurrences",
+      "source_id": "message_12",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_16",
+      "supplied_user_id": "user_16",
+      "supporting_text": "The renewed lease increases monthly rent by 12%. The new amount will be used for the next rent payment.",
+      "transaction_type": "rent",
+      "update_status": "amended"
+    },
+    {
+      "action": "confirmation",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "once",
+      "source_id": "message_13",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_18",
+      "supplied_user_id": "user_18",
+      "supporting_text": "The matching debit and credit came from a transfer between your two accounts. Both accounts are registered under the same account holder. Both entries will remain visible in your transaction history.",
+      "transaction_type": "transfer",
+      "update_status": "confirmed"
+    },
+    {
+      "action": "refund",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "once",
+      "source_id": "message_14",
+      "source_kind": "message",
+      "supplied_event_id": "event_1785",
+      "supplied_request_id": "request_20",
+      "supplied_user_id": "user_20",
+      "supporting_text": "Your refund has been initiated but has not reached your account yet. We\u2019ll send another update when the credit is completed. Order ref MER-0014.",
+      "transaction_type": "refund",
+      "update_status": "pending"
+    },
+    {
+      "action": "non_cash_confirmation",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "unknown",
+      "source_id": "message_15",
+      "source_kind": "message",
+      "supplied_event_id": "event_1960",
+      "supplied_request_id": "request_22",
+      "supplied_user_id": "user_22",
+      "supporting_text": "Your portfolio\u2019s displayed market value has increased substantially. No units have been sold and no cash proceeds have been generated.",
+      "transaction_type": "unknown",
+      "update_status": "not_cash"
+    },
+    {
+      "action": "other",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "once",
+      "source_id": "message_16",
+      "source_kind": "message",
+      "supplied_event_id": null,
+      "supplied_request_id": "request_23",
+      "supplied_user_id": "user_23",
+      "supporting_text": "Your prize claim has been verified and is still in payment processing. The payment has not been credited to your account yet.",
+      "transaction_type": "prize",
+      "update_status": "pending"
+    },
+    {
+      "action": "settlement",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": null,
+      "dates": [],
+      "missing_fields": [
+        "amount",
+        "currency",
+        "dates"
+      ],
+      "recurrence_scope": "once",
+      "source_id": "message_17",
+      "source_kind": "message",
+      "supplied_event_id": "event_2165",
+      "supplied_request_id": null,
+      "supplied_user_id": "user_24",
+      "supporting_text": "The prize proceeds have reached your account after withholding. The claim is now closed and there are no further scheduled payments.",
+      "transaction_type": "prize",
+      "update_status": "settled"
+    },
+    {
+      "action": "settlement",
+      "ambiguities": [],
+      "amount": null,
+      "conflicts": [],
+      "currency": "INR",
+      "dates": [
+        {
+          "date": "2026-07-24",
+          "meaning": "payment_date"
+        }
+      ],
+      "missing_fields": [
+        "amount"
+      ],
+      "recurrence_scope": "once",
+      "source_id": "message_35",
+      "source_kind": "message",
+      "supplied_event_id": "event_4535",
+      "supplied_request_id": "request_48",
+      "supplied_user_id": "user_48",
+      "supporting_text": "Your property maintenance payment was received on 24 July 2026. The receipt has the final INR amount and the original due date. Payment ref SER-0035.",
+      "transaction_type": "expense",
+      "update_status": "settled"
+    }
+  ],
+  "field_matches": {
+    "action": 12,
+    "amount": 19,
+    "application": 19,
+    "currency": 19,
+    "dates": 19,
+    "recurrence_scope": 19,
+    "source_references": 19,
+    "transaction_type": 18,
+    "update_status": 18
+  },
+  "generated_at_utc": "2026-09-12T18:24:34Z",
+  "message_count": 19,
+  "model": "google/gemini-3.8-flash",
+  "records": [
+    {
+      "application": {
+        "cash_effect": "timeline_amendment",
+        "reason": "validated salary timeline fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "amendment",
+        "ambiguities": [],
+        "amount": "42750000",
+        "conflicts": [],
+        "currency": "IDR",
+        "dates": [
+          {
+            "date": "2025-08-15",
+            "meaning": "effective_date"
+          }
+        ],
+        "missing_fields": [],
+        "recurrence_scope": "future_occurrences",
+        "source_id": "message_01",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": null,
+        "supplied_user_id": "user_02",
+        "supporting_text": "Rincian penggajian Anda di Cobalt Systems telah berubah. Gaji bulanan Anda naik menjadi IDR 42750000. Perubahan ini berlaku mulai 2025-08-15.",
+        "transaction_type": "salary",
+        "update_status": "amended"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 297,
+      "message_id": "message_01",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 648,
+      "reported_cost_usd": "0.00265275",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "none",
+        "reason": "no linked event was supplied",
+        "state": "unresolved"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "confirmation",
+        "ambiguities": [
+          "Specific payment amount and exact payroll dates are not provided."
+        ],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "unknown",
+        "source_id": "message_02",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_03",
+        "supplied_user_id": "user_03",
+        "supporting_text": "Gaji rutin untuk penggajian berikutnya sudah dikonfirmasi. Slip gaji berikutnya akan menampilkan gaji rutin dan penyesuaian satu kali secara terpisah. Ref payroll EMP-0002.",
+        "transaction_type": "salary",
+        "update_status": "confirmed"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 282,
+      "message_id": "message_02",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 1179,
+      "reported_cost_usd": "0.00463275",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "none",
+        "reason": "no linked event was supplied",
+        "state": "unresolved"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "amendment",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "payment_date"
+        ],
+        "recurrence_scope": "unknown",
+        "source_id": "message_03",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_04",
+        "supplied_user_id": "user_04",
+        "supporting_text": "Rincian penggajian Anda di Greenfield Foods telah berubah. Bonus kuartalan Anda masih menunggu hasil akhir penilaian kinerja. Jumlah akhir dan tanggal pembayaran belum disetujui. Kami akan mengirim pembaruan setelah tim payroll mengonfirmasi jumlah dan tanggalnya. Ref payroll EMP-0003.",
+        "transaction_type": "salary",
+        "update_status": "pending"
+      },
+      "field_matches": {
+        "action": false,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 293,
+      "message_id": "message_03",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 897,
+      "reported_cost_usd": "0.0035835",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "timeline_amendment",
+        "reason": "validated salary timeline fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "amendment",
+        "ambiguities": [],
+        "amount": "1037.52",
+        "conflicts": [],
+        "currency": "EUR",
+        "dates": [],
+        "missing_fields": [
+          "dates",
+          "supplied_event_id"
+        ],
+        "recurrence_scope": "future_occurrences",
+        "source_id": "message_04",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_06",
+        "supplied_user_id": "user_06",
+        "supporting_text": "Your temporary monthly pay is EUR 1037.52. The reduced amount continues for the next payroll. This is the amount currently scheduled for the affected pay cycle.",
+        "transaction_type": "salary",
+        "update_status": "amended"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 289,
+      "message_id": "message_04",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 1017,
+      "reported_cost_usd": "0.0040305",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "timeline_amendment",
+        "reason": "validated salary timeline fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "amendment",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [
+          {
+            "date": "2024-09-23",
+            "meaning": "payment_date"
+          }
+        ],
+        "missing_fields": [
+          "amount",
+          "currency"
+        ],
+        "recurrence_scope": "once",
+        "source_id": "message_05",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": null,
+        "supplied_user_id": "user_07",
+        "supporting_text": "BrightPath Media has updated your payroll record. Your confirmed salary is now expected on 2024-09-23. This replaces the payroll date shown in the earlier update.",
+        "transaction_type": "salary",
+        "update_status": "amended"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 290,
+      "message_id": "message_05",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 739,
+      "reported_cost_usd": "0.00298875",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "timeline_amendment",
+        "reason": "validated salary timeline fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "amendment",
+        "ambiguities": [],
+        "amount": "1422.85",
+        "conflicts": [],
+        "currency": "EUR",
+        "dates": [],
+        "missing_fields": [
+          "dates"
+        ],
+        "recurrence_scope": "once",
+        "source_id": "message_06",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_08",
+        "supplied_user_id": "user_08",
+        "supporting_text": "Your next salary is reduced to EUR 1422.85. The adjustment is due to approved unpaid leave.",
+        "transaction_type": "salary",
+        "update_status": "amended"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 284,
+      "message_id": "message_06",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 566,
+      "reported_cost_usd": "0.0023355",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "none",
+        "reason": "transaction update lacks confirmed settlement",
+        "state": "unresolved"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "other",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "once",
+        "source_id": "message_07",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_10",
+        "supplied_user_id": "user_10",
+        "supporting_text": "The next QuickCrew payout is still pending. The weekly earnings shown in the QuickCrew app can change until the payout is closed.",
+        "transaction_type": "payout",
+        "update_status": "pending"
+      },
+      "field_matches": {
+        "action": false,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 292,
+      "message_id": "message_07",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 727,
+      "reported_cost_usd": "0.00294525",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "timeline_amendment",
+        "reason": "validated salary timeline fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "confirmation",
+        "ambiguities": [],
+        "amount": "38760000",
+        "conflicts": [],
+        "currency": "IDR",
+        "dates": [],
+        "missing_fields": [
+          "dates"
+        ],
+        "recurrence_scope": "unknown",
+        "source_id": "message_08",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_11",
+        "supplied_user_id": "user_11",
+        "supporting_text": "Berikut informasi penggajian terbaru dari Greenfield Foods. Gaji pokok yang dikonfirmasi adalah IDR 38760000. Komisi dari transaksi yang masih berjalan belum disetujui. Transaksi yang masih berjalan tidak masuk pembayaran sampai komisinya dinyatakan diperoleh. Ref payroll EMP-0008.",
+        "transaction_type": "salary",
+        "update_status": "confirmed"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 297,
+      "message_id": "message_08",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 990,
+      "reported_cost_usd": "0.00393525",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "timeline_amendment",
+        "reason": "validated salary timeline fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "cancellation",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "future_occurrences",
+        "source_id": "message_09",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": null,
+        "supplied_user_id": "user_12",
+        "supporting_text": "The current seasonal contract has ended. No off-season income or renewal has been confirmed.",
+        "transaction_type": "salary",
+        "update_status": "ended"
+      },
+      "field_matches": {
+        "action": false,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 281,
+      "message_id": "message_09",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 774,
+      "reported_cost_usd": "0.00311325",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "timeline_amendment",
+        "reason": "validated salary timeline fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "other",
+        "ambiguities": [],
+        "amount": "2717",
+        "conflicts": [],
+        "currency": "EUR",
+        "dates": [
+          {
+            "date": "2025-08-15",
+            "meaning": "effective_date"
+          }
+        ],
+        "missing_fields": [
+          "supplied_request_id",
+          "supplied_event_id"
+        ],
+        "recurrence_scope": "future_occurrences",
+        "source_id": "message_10",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": null,
+        "supplied_user_id": "user_14",
+        "supporting_text": "Regular salary of EUR 2717 resumes on 2025-08-15.",
+        "transaction_type": "salary",
+        "update_status": "resumed"
+      },
+      "field_matches": {
+        "action": false,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 295,
+      "message_id": "message_10",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 976,
+      "reported_cost_usd": "0.00388125",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "none",
+        "reason": "transaction update lacks confirmed settlement",
+        "state": "unresolved"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "other",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "unknown",
+        "source_id": "message_106",
+        "source_kind": "message",
+        "supplied_event_id": "event_12709",
+        "supplied_request_id": null,
+        "supplied_user_id": "user_138",
+        "supporting_text": "The extra card charge is still being investigated. A reversal has not been posted to the account yet. The dispute is open and no reversal has been posted yet.",
+        "transaction_type": "expense",
+        "update_status": "disputed"
+      },
+      "field_matches": {
+        "action": false,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 290,
+      "message_id": "message_106",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 854,
+      "reported_cost_usd": "0.00342",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "timeline_amendment",
+        "reason": "validated salary timeline fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "confirmation",
+        "ambiguities": [],
+        "amount": "1661",
+        "conflicts": [],
+        "currency": "EUR",
+        "dates": [
+          {
+            "date": "2026-01-15",
+            "meaning": "payment_date"
+          }
+        ],
+        "missing_fields": [],
+        "recurrence_scope": "once",
+        "source_id": "message_11",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_15",
+        "supplied_user_id": "user_15",
+        "supporting_text": "Your first salary will be EUR 1661. The confirmed credit date is 2026-01-15.",
+        "transaction_type": "salary",
+        "update_status": "confirmed"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 293,
+      "message_id": "message_11",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 798,
+      "reported_cost_usd": "0.00321225",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "none",
+        "reason": "no linked event was supplied",
+        "state": "unresolved"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "amendment",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "future_occurrences",
+        "source_id": "message_12",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_16",
+        "supplied_user_id": "user_16",
+        "supporting_text": "The renewed lease increases monthly rent by 12%. The new amount will be used for the next rent payment.",
+        "transaction_type": "rent",
+        "update_status": "amended"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 279,
+      "message_id": "message_12",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 590,
+      "reported_cost_usd": "0.00242175",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "none",
+        "reason": "no linked event was supplied",
+        "state": "unresolved"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "confirmation",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "once",
+        "source_id": "message_13",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_18",
+        "supplied_user_id": "user_18",
+        "supporting_text": "The matching debit and credit came from a transfer between your two accounts. Both accounts are registered under the same account holder. Both entries will remain visible in your transaction history.",
+        "transaction_type": "transfer",
+        "update_status": "confirmed"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 290,
+      "message_id": "message_13",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 880,
+      "reported_cost_usd": "0.0035175",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "none",
+        "reason": "transaction update lacks confirmed settlement",
+        "state": "unresolved"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "refund",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "once",
+        "source_id": "message_14",
+        "source_kind": "message",
+        "supplied_event_id": "event_1785",
+        "supplied_request_id": "request_20",
+        "supplied_user_id": "user_20",
+        "supporting_text": "Your refund has been initiated but has not reached your account yet. We\u2019ll send another update when the credit is completed. Order ref MER-0014.",
+        "transaction_type": "refund",
+        "update_status": "pending"
+      },
+      "field_matches": {
+        "action": false,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": false
+      },
+      "input_tokens": 282,
+      "message_id": "message_14",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 497,
+      "reported_cost_usd": "0.00207525",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "status_only",
+        "reason": "validated visible status fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "non_cash_confirmation",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "unknown",
+        "source_id": "message_15",
+        "source_kind": "message",
+        "supplied_event_id": "event_1960",
+        "supplied_request_id": "request_22",
+        "supplied_user_id": "user_22",
+        "supporting_text": "Your portfolio\u2019s displayed market value has increased substantially. No units have been sold and no cash proceeds have been generated.",
+        "transaction_type": "unknown",
+        "update_status": "not_cash"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": false,
+        "update_status": true
+      },
+      "input_tokens": 292,
+      "message_id": "message_15",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 918,
+      "reported_cost_usd": "0.0036615",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "none",
+        "reason": "transaction update lacks confirmed settlement",
+        "state": "unresolved"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "other",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "once",
+        "source_id": "message_16",
+        "source_kind": "message",
+        "supplied_event_id": null,
+        "supplied_request_id": "request_23",
+        "supplied_user_id": "user_23",
+        "supporting_text": "Your prize claim has been verified and is still in payment processing. The payment has not been credited to your account yet.",
+        "transaction_type": "prize",
+        "update_status": "pending"
+      },
+      "field_matches": {
+        "action": false,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 290,
+      "message_id": "message_16",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 920,
+      "reported_cost_usd": "0.0036675",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "status_only",
+        "reason": "validated visible status fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "settlement",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": null,
+        "dates": [],
+        "missing_fields": [
+          "amount",
+          "currency",
+          "dates"
+        ],
+        "recurrence_scope": "once",
+        "source_id": "message_17",
+        "source_kind": "message",
+        "supplied_event_id": "event_2165",
+        "supplied_request_id": null,
+        "supplied_user_id": "user_24",
+        "supporting_text": "The prize proceeds have reached your account after withholding. The claim is now closed and there are no further scheduled payments.",
+        "transaction_type": "prize",
+        "update_status": "settled"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 291,
+      "message_id": "message_17",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 672,
+      "reported_cost_usd": "0.00273825",
+      "retries": 0
+    },
+    {
+      "application": {
+        "cash_effect": "status_only",
+        "reason": "validated visible status fact",
+        "state": "applied"
+      },
+      "cache_hit": false,
+      "cost_source": "provider",
+      "estimated_cost_usd": null,
+      "fact": {
+        "action": "settlement",
+        "ambiguities": [],
+        "amount": null,
+        "conflicts": [],
+        "currency": "INR",
+        "dates": [
+          {
+            "date": "2026-07-24",
+            "meaning": "payment_date"
+          }
+        ],
+        "missing_fields": [
+          "amount"
+        ],
+        "recurrence_scope": "once",
+        "source_id": "message_35",
+        "source_kind": "message",
+        "supplied_event_id": "event_4535",
+        "supplied_request_id": "request_48",
+        "supplied_user_id": "user_48",
+        "supporting_text": "Your property maintenance payment was received on 24 July 2026. The receipt has the final INR amount and the original due date. Payment ref SER-0035.",
+        "transaction_type": "expense",
+        "update_status": "settled"
+      },
+      "field_matches": {
+        "action": true,
+        "amount": true,
+        "application": true,
+        "currency": true,
+        "dates": true,
+        "recurrence_scope": true,
+        "source_references": true,
+        "transaction_type": true,
+        "update_status": true
+      },
+      "input_tokens": 276,
+      "message_id": "message_35",
+      "model_name": "google/gemini-3.8-flash",
+      "output_tokens": 981,
+      "reported_cost_usd": "0.00388575",
+      "retries": 0
+    }
+  ],
+  "schema_version": "message-evaluation-v1",
+  "usage": {
+    "average_cost_usd_per_message": "0.003299921052631578947368421053",
+    "cache_hits": 0,
+    "input_tokens": 5483,
+    "output_tokens": 15623,
+    "provider_calls": 19,
+    "total_cost_usd": "0.06269850",
+    "total_tokens": 21106
+  }
+}

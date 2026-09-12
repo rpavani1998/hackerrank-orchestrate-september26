@@ -494,41 +494,98 @@ Official references used:
 - [API responses and usage](https://openrouter.ai/docs/api_reference/overview)
 - [Limits and retries](https://openrouter.ai/docs/api_reference/limits)
 
-### Configuration and first message category
+### Message semantics and end-to-end integration
 
-- `.env` exists locally with a configured `OPENROUTER_API_KEY`; it is ignored and was not staged. Its value is intentionally not displayed in this report or the session log.
-- `.env.example` contains placeholders only.
-- `code/package.py` independently excludes `.env`, `.env.*` backups, bytecode, caches, and Git metadata from archives; `.env.example` is allowed.
-- `code/openrouter_smoke.py` extracts only `message_14` and never invokes `code/main.py:main()`.
-- The first category is explicit transaction-status evidence, beginning with delayed refunds. `message_14` is linked to `request_20`/`event_1785` and is expected to produce `action=delay` with no invented amount or settlement date.
-- `apply_evidence_fact()` allows a visible linked status fact to produce a status-only application result, but a delayed refund without confirmed amount or settlement date remains `unresolved` with `cash_effect=none`. It does not mutate balances or create income.
-- The existing deterministic payroll parser remains available; the evidence ledger rejects duplicate application when deterministic and model paths converge. No model fact is currently applied to `Agent`; the live result is validated only through the isolated status-application boundary.
+The original `message_14` says: “Your refund has been initiated but has not reached your account yet.” The underlying transaction is a **refund**; the update is **delayed**. The old single `action` field could represent either concept, so schema v2 adds required `transaction_type` and `update_status` fields while preserving `action` as a legacy update summary. A focused regression test validates `transaction_type=refund`, `update_status=delayed`, and `action=delay` independently.
 
-### Mocked and deterministic verification
+A fixed, source-backed evaluation set of 19 actual messages was recorded in:
 
 ```text
-OpenRouter adapter tests: 11 passed
-Evidence contract/application tests: 9 passed
-Full suite: 29 passed
-Sample comparison: 25 samples, 0 exceptions
-Sample fields: unchanged from evaluation/sample_baseline.txt
-Live smoke extraction: 1 authenticated call, 1 cache reuse
+evaluation/message_extraction_expectations.json
 ```
 
-The live smoke result was source-linked to `message_14`/`event_1785` and had
-`amount=null`, `currency=null`, no dates, and no confirmed settlement. The
-model chose the allowed `action=refund` label for the delayed-refund wording;
-local application therefore kept it `unresolved` with `cash_effect=none`. It
-was not added to the deterministic forecast or treated as income. Provider
-usage was 236 input tokens and 183 output tokens, with provider-reported cost
-`0.00002644` USD; no credential or raw prompt was written to the report.
+It covers recurring salary amount/date amendments, pending and ended salary, rent amendments, pending payouts, same-account transfers, delayed refunds, non-cash investment value, pending and settled prizes, settled payment receipts, and reversal disputes. The inventory contains no message explicitly saying a transaction was cancelled; the selected bank reversal messages correctly test that an unposted reversal must not be treated as cancellation.
 
-The deterministic comparisons remain separately saved at:
+Validated model facts are saved in:
 
 ```text
-evaluation/sample_comparison_after_extraction_interface.txt
-evaluation/sample_comparison_after_openrouter_adapter.txt
+evaluation/message_extraction_results.json
+evaluation/message_extraction_evaluation.md
 ```
+
+The configured model for this run was `google/gemini-3.8-flash` from `OPENROUTER_MODEL`. Results:
+
+```text
+messages: 19
+provider calls: 19
+cache hits during evaluation: 0
+input tokens: 5,483
+output tokens: 15,623
+total tokens: 21,106
+provider-reported cost: USD 0.06269850
+average cost/message: USD 0.003299921052631578947368421053
+source references: 19/19
+transaction_type: 18/19
+update_status: 18/19
+legacy action: 12/19
+amount: 19/19
+currency: 19/19
+dates: 19/19
+recurrence_scope: 19/19
+validated application state: 19/19
+```
+
+The raw model semantic misses are retained in the artifact: `message_14` used
+`refund/pending` instead of the source-supported `refund/delayed`, and
+`message_15` used `unknown/not_cash` instead of identifying the investment-sale
+context. No result was marked correct merely because it produced no cash.
+Pending/disputed refunds, payouts, prizes, and reversals remain unresolved;
+settled/non-cash facts are status-only and do not add starting-balance cash.
+
+AI mode is now an actual prediction path. `main.py --mode ai` loads the
+validated result facts, rechecks message user/request/event references and
+visibility, uses the duplicate ledger, and feeds supported salary facts into
+the existing projection/replay engine. Messages without a validated AI fact
+use the prior deterministic parser, without double-applying a message that
+already has a validated AI fact.
+
+### Demonstrated timeline effect
+
+The complete source-to-forecast trace is saved at:
+
+```text
+evaluation/ai_timeline_effect.md
+```
+
+For `request_15`, `message_11` produced a validated confirmed salary fact for
+EUR 1661 on 2026-01-15. Its application was `state=applied`,
+`cash_effect=timeline_amendment`; AI mode added one projected credit on that
+date. The deterministic parser did not extract this “first salary will be”
+wording, so the event count changed from 50 to 51. The recommendation remained
+unchanged, and no duplicate event or unconfirmed income was created.
+
+### Both-mode sample verification
+
+```text
+Deterministic: 25 samples, 0 exceptions
+AI-enabled: 25 samples, 0 exceptions
+Output-field differences between modes: none
+```
+
+Per-field results and source-backed difference explanations are saved at:
+
+```text
+evaluation/sample_comparison_deterministic_mode.txt
+evaluation/sample_comparison_ai_mode.txt
+evaluation/mode_comparison.md
+```
+
+Both modes matched the preserved baseline at the same rates: safe amount 3/25,
+affordability status 19/25, payment method 21/25, payment plan 21/25, earliest
+full payment 17/25, spending changes 20/25, and explanation consistency 25/25.
+Neither comparison wrote `output.csv`. The full suite now passes 31 tests, and
+the actual AI prediction path produced 250 rows when redirected to a temporary
+output file.
 
 ### Previously reported checks, not rerun during this step
 
@@ -613,23 +670,28 @@ The provider-neutral extraction contract, tests, evidence inventory, and post-in
   evaluation/sample_comparison_after_extraction_interface.txt
 ```
 
-### Current uncommitted OpenRouter integration checkpoint
+### Message-integration checkpoint contents
 
-The current working-tree files for this integration are:
+The coherent checkpoint contains:
 
 ```text
-?? .env.example
-?? .gitignore
-?? code/README.md
- M code/evidence_extraction.py
- M code/main.py
-?? code/openrouter_smoke.py
-?? code/package.py
- M code/test_evidence_extraction.py
- M code/test_main.py
-?? code/test_openrouter.py
- M evaluation/progress_report.md
-?? evaluation/sample_comparison_after_openrouter_adapter.txt
+code/README.md
+code/compare_samples.py
+code/compare_modes.py
+code/evidence_extraction.py
+code/evaluate_messages.py
+code/main.py
+code/test_evidence_extraction.py
+code/test_main.py
+code/test_openrouter.py
+evaluation/ai_timeline_effect.md
+evaluation/message_extraction_evaluation.md
+evaluation/message_extraction_expectations.json
+evaluation/message_extraction_results.json
+evaluation/mode_comparison.md
+evaluation/progress_report.md
+evaluation/sample_comparison_ai_mode.txt
+evaluation/sample_comparison_deterministic_mode.txt
 ```
 
 `.env` is intentionally absent from Git status because it is ignored. Previously untracked unrelated artifacts remain preserved and are not part of this checkpoint:
@@ -644,21 +706,20 @@ output.csv
 
 ### Production/output preservation
 
-During this OpenRouter integration iteration:
+During this message-integration iteration:
 
-- `code/main.py` changed only to expose an explicit `--mode deterministic` CLI guard; financial logic and `output.csv` were not changed.
-- The deterministic payroll parser and financial engine remain the authority.
-- One live message extraction was made with the pre-existing local key; its output was validated and kept out of predictions. A second invocation reused cache without another provider call.
-- No message or image fact was applied to predictions.
-- `.env` was created locally but was not staged, logged, cached, or packaged.
-- `evaluation/sample_baseline.txt` was preserved unchanged.
-- No recurrence statistic, correction factor, or extra reserve was introduced.
-- No push was performed; this integration is ready for a local commit after final diff review.
+- `code/main.py` gained an explicit AI mode and validated-fact loading; arithmetic, replay, and plan selection remain deterministic.
+- `code/compare_samples.py` and `code/compare_modes.py` ran both modes read-only; `output.csv` was not changed.
+- The deterministic payroll parser remains available only for messages without a validated AI fact, preventing double application.
+- One real salary timeline effect was demonstrated from `message_11`; unresolved and status-only facts did not create cash.
+- The configured key was used for 19 calls but never displayed, logged, committed, or packaged.
+- `.evidence_cache/` is ignored; validated results and usage metadata are in the committed evaluation artifact.
+- `evaluation/sample_baseline.txt` and the pre-existing `output.csv` were preserved.
+- No recurrence statistic, correction factor, extra reserve, or image extraction was introduced.
+- No push was performed.
 
-## Next steps
+## Next bounded task
 
-1. Review the live `message_14` label choice (`refund` versus the fixture’s delayed-status interpretation) and define a general, evidence-supported status normalization rule before applying model facts broadly; do not add a one-off correction.
-2. Add deterministic conflict/application integration only after the status taxonomy is resolved; keep the salary-persistence regression and deterministic mode unchanged.
-3. Run a broader message extraction only with cache/cost accounting and source-linked validation enabled.
-4. Add image extraction only as a separate checkpoint after message integration; retain manual image values as reference fixtures and reject unresolved amounts rather than silently omitting events.
-5. Preserve `evaluation/sample_baseline.txt` and `output.csv`, and measure extraction accuracy separately from affordability matches.
+1. Automate extraction of the 16 supplied images as a separate checkpoint, preserving amount roles such as total, already-paid, and amount due.
+2. Resolve remaining message gaps: general status normalization (`pending` versus `delayed`), investment-sale transaction typing, and explicit cancellation evidence (none is present in the supplied messages).
+3. Re-run both modes and the full 25-sample comparison after image integration, then package the final artifacts without staging `.env`.

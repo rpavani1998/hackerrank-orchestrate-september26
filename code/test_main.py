@@ -94,9 +94,9 @@ class FinancialAgentTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertTrue(any(value < profile.minimum for value in balances.values()))
 
-    def test_only_deterministic_mode_is_available(self):
+    def test_prediction_modes_are_explicit(self):
         with self.assertRaises(ValueError):
-            main("ai")
+            main("unsupported")
 
     def test_output_contract_enums_and_bounds(self):
         requests = self.data.requests
