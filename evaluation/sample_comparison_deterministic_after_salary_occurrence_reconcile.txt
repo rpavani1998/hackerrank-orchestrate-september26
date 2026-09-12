@@ -1,0 +1,113 @@
+mode: deterministic
+=== SAMPLE COMPARISON ===
+samples: 25
+exceptions: 0
+
+Per-field matches (structural payment-plan comparison):
+  amount_safe_to_pay: 3/25
+  affordability_status: 19/25
+  recommended_payment_method: 21/25
+  payment_plan: 21/25
+  earliest_date_for_full_payment: 17/25
+  spending_changes_needed: 20/25
+  explanation_consistency: 25/25
+
+Exceptions: none
+
+Mismatches:
+  request_01: fields=[amount_safe_to_pay,affordability_status,recommended_payment_method,payment_plan,earliest_date_for_full_payment] amount_expected=25256 amount_actual=6242.62 amount_difference=-19013.38
+    plan expected: 2024-03-03:25256
+    plan actual:   none
+    affordability_status: expected='affordable_now' actual='not_affordable'
+    earliest_date_for_full_payment: expected='2024-03-03' actual=''
+    recommended_payment_method: expected='full_payment' actual='not_recommended'
+  request_02: fields=[amount_safe_to_pay] amount_expected=17229139.2 amount_actual=17864721.20 amount_difference=635582.00
+  request_03: fields=[amount_safe_to_pay] amount_expected=873000 amount_actual=1089018.06 amount_difference=216018.06
+  request_04: fields=[amount_safe_to_pay] amount_expected=8401800 amount_actual=10132985.41 amount_difference=1731185.41
+  request_05: fields=[amount_safe_to_pay] amount_expected=737 amount_actual=0 amount_difference=-737
+  request_06: fields=[amount_safe_to_pay,affordability_status,earliest_date_for_full_payment,spending_changes_needed] amount_expected=603.3 amount_actual=620.40 amount_difference=17.10
+    affordability_status: expected='affordable_with_plan' actual='affordable_now'
+    earliest_date_for_full_payment: expected='2026-01-15' actual='2026-01-03'
+    spending_changes_needed: expected='stop:event_476' actual='none'
+  request_07: fields=[amount_safe_to_pay] amount_expected=87170.56 amount_actual=94391.34 amount_difference=7220.78
+  request_08: fields=[amount_safe_to_pay,affordability_status,recommended_payment_method,payment_plan,earliest_date_for_full_payment] amount_expected=284.57 amount_actual=369.70 amount_difference=85.13
+    plan expected: 2025-04-15:996.60
+    plan actual:   none
+    affordability_status: expected='affordable_later' actual='not_affordable'
+    earliest_date_for_full_payment: expected='2025-04-15' actual=''
+    recommended_payment_method: expected='wait' actual='not_recommended'
+  request_10: fields=[amount_safe_to_pay] amount_expected=12700 amount_actual=0 amount_difference=-12700
+  request_11: fields=[amount_safe_to_pay,affordability_status,earliest_date_for_full_payment,spending_changes_needed] amount_expected=12510645 amount_actual=13110000 amount_difference=599355
+    affordability_status: expected='affordable_with_plan' actual='affordable_now'
+    earliest_date_for_full_payment: expected='2025-07-15' actual='2025-05-03'
+    spending_changes_needed: expected='reduce_to:event_989:665950' actual='none'
+  request_13: fields=[amount_safe_to_pay,affordability_status,recommended_payment_method,payment_plan,earliest_date_for_full_payment] amount_expected=433.4 amount_actual=325.23 amount_difference=-108.17
+    plan expected: 2024-05-15:941.60
+    plan actual:   none
+    affordability_status: expected='affordable_later' actual='not_affordable'
+    earliest_date_for_full_payment: expected='2024-05-15' actual=''
+    recommended_payment_method: expected='wait' actual='not_recommended'
+  request_14: fields=[amount_safe_to_pay] amount_expected=597.74 amount_actual=0 amount_difference=-597.74
+  request_15: fields=[amount_safe_to_pay] amount_expected=83.05 amount_actual=0 amount_difference=-83.05
+  request_17: fields=[amount_safe_to_pay,earliest_date_for_full_payment,spending_changes_needed] amount_expected=243849.58 amount_actual=237498.83 amount_difference=-6350.75
+    earliest_date_for_full_payment: expected='2026-03-15' actual='2026-04-15'
+    spending_changes_needed: expected='none' actual='reduce_to:event_1542:2935'
+  request_18: fields=[amount_safe_to_pay] amount_expected=462 amount_actual=646.65 amount_difference=184.65
+  request_19: fields=[amount_safe_to_pay,recommended_payment_method,payment_plan,earliest_date_for_full_payment] amount_expected=28820 amount_actual=39660 amount_difference=10840
+    plan expected: 2024-09-04:28820|2024-09-15:10840
+    plan actual:   2024-09-04:20623.20|2024-10-02:20623.20
+    earliest_date_for_full_payment: expected='2024-09-15' actual='2024-09-04'
+    recommended_payment_method: expected='partial_payment' actual='installments'
+  request_20: fields=[amount_safe_to_pay] amount_expected=5400 amount_actual=17006.40 amount_difference=11606.40
+  request_21: fields=[amount_safe_to_pay,affordability_status,earliest_date_for_full_payment,spending_changes_needed] amount_expected=1543.35 amount_actual=1574.40 amount_difference=31.05
+    affordability_status: expected='affordable_with_plan' actual='affordable_now'
+    earliest_date_for_full_payment: expected='2026-04-15' actual='2026-04-03'
+    spending_changes_needed: expected='stop:event_1815|reduce_to:event_1816:23.50' actual='none'
+  request_22: fields=[amount_safe_to_pay,spending_changes_needed] amount_expected=475.46 amount_actual=469.81 amount_difference=-5.65
+    spending_changes_needed: expected='none' actual='stop:event_1892'
+  request_23: fields=[amount_safe_to_pay] amount_expected=9152 amount_actual=10113.63 amount_difference=961.63
+  request_24: fields=[amount_safe_to_pay] amount_expected=13420 amount_actual=13080.61 amount_difference=-339.39
+  request_25: fields=[amount_safe_to_pay] amount_expected=1425000 amount_actual=2388502.63 amount_difference=963502.63
+
+=== REQUEST_02 TRACE ===
+request_date: 2025-08-05  forecast_end: 2025-11-03
+starting_balance: 60383889.2 IDR
+protected_minimum: 29158400 IDR
+requested_amount: 46018000 IDR
+desired_completion_date: 2025-10-10
+safe_amount_actual: 17864721.20 IDR
+safe_amount_expected: 17229139.2 IDR
+safe_amount_difference_actual_minus_expected: 635582.00 IDR
+lowest_baseline_balance: 47023121.20 IDR
+lowest_baseline_balance_date: 2025-08-13
+explicit_projection_count: 1
+recurring_projection_count_before_explicit_dedup: 38
+recurring_projection_count_after_explicit_dedup: 38
+message_salary_count: 1
+removed_by_message_same_date: 1
+earliest_full_actual: 2025-09-15
+
+Messages and extracted facts:
+  message_01 sent_at=2025-07-29T09:30:00Z source=employer
+    Rincian penggajian Anda di Cobalt Systems telah berubah. Gaji bulanan Anda naik menjadi IDR 42750000. Perubahan ini berlaku mulai 2025-08-15. Jumlah yang diperbarui akan terlihat pada slip gaji berikutnya. Ref payroll EMP-0001.
+  extracted_facts: [('2025-08-15', Decimal('42750000'), 'message payroll')]
+
+Currency conversion and lifecycle notes:
+  converted_events: none; all request_02 event currencies are IDR
+  linked_event_ids are loaded, but no linked-event graph reconciliation is performed by the current engine.
+  status handling excludes failed/cancelled/unrealized events and excludes pending credits; pending debits remain.
+  explicit-key recurrence removals: 0
+  message-date recurrence removals: 1
+
+Every baseline cash-flow event contributing through the lowest date:
+  2025-08-07 debit  amount=2081730.85 IDR category=utilities source=inferred_from:event_138 balance_after=58302158.35 (Municipal utilities; source_status=settled; source_date=2025-07-07; source_currency=IDR; linked_event_id=-)
+  2025-08-08 debit  amount=1132400 IDR category=insurance source=inferred_from:event_139 balance_after=57169758.35 (Household insurance; source_status=settled; source_date=2025-07-08; source_currency=IDR; linked_event_id=-)
+  2025-08-08 debit  amount=1651100 IDR category=shopping source=explicit:event_185 balance_after=55518658.35 (Pending merchant debit; source_status=pending; source_date=2025-08-08; source_currency=IDR; linked_event_id=-)
+  2025-08-09 debit  amount=3040000 IDR category=education source=inferred_from:event_140 balance_after=52478658.35 (Course tuition; source_status=settled; source_date=2025-07-09; source_currency=IDR; linked_event_id=-)
+  2025-08-09 debit  amount=2218141.61 IDR category=groceries source=inferred_from:event_162 balance_after=50260516.74 (Supermarket basket; source_status=settled; source_date=2025-07-30; source_currency=IDR; linked_event_id=-)
+  2025-08-11 debit  amount=1538498.1 IDR category=healthcare source=inferred_from:event_141 balance_after=48722018.64 (Clinic payment; source_status=settled; source_date=2025-07-11; source_currency=IDR; linked_event_id=-)
+  2025-08-12 debit  amount=1329347.44 IDR category=transport source=inferred_from:event_175 balance_after=47392671.20 (Metro and bus fares; source_status=settled; source_date=2025-07-29; source_currency=IDR; linked_event_id=-)
+  2025-08-13 debit  amount=369550 IDR category=cloud_storage source=inferred_from:event_143 balance_after=47023121.20 (Shared storage plan; source_status=settled; source_date=2025-07-13; source_currency=IDR; linked_event_id=-)
+
+Events on the lowest-balance date:
+  2025-08-13 debit  amount=369550 IDR category=cloud_storage source=inferred_from:event_143 balance_after=47023121.20

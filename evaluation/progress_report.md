@@ -67,7 +67,7 @@ Major components in `code/main.py`:
 - `Agent.message_facts()` uses a narrow regular expression to extract dated payroll amounts.
 - `Agent.explicit_projection()` includes future settled, pending, and scheduled cash events while excluding failed, cancelled, unrealized, and pending-credit events.
 - `Agent.recurring_projection()` infers approximate weekly, biweekly, monthly, or two-month recurrences from historical settled events.
-- `Agent.projections()` combines explicit events, inferred events, and payroll-message facts while removing some same-key/same-date duplicates.
+- `Agent.projections()` combines explicit events, inferred events, and payroll-message facts, then reconciles a confirmed salary row with the inferred payday it represents.
 - `Agent.replay()` applies cash events day by day, credits before debits, then proposed payments, stopping at the first minimum-balance violation.
 - `Agent.safe_amount()` calculates unchanged-baseline headroom above the minimum balance.
 - `Agent.earliest_full()` tries a full payment on each day of the 90-day window.
@@ -634,7 +634,51 @@ Important untested behavior includes:
 - plan ranking across all competing plan types
 - explanation details when spending changes are selected
 
+## Salary occurrence reconciliation checkpoint
+
+Cause: commit `737b454` changed explicit/inferred dedup from `(date, category, direction)` to `(date, description-keyed series, direction)`. A scheduled `Next confirmed salary` row and the inferred continuation of `Payroll credit` / `Primary household salary` stopped matching, so the same payday was credited twice.
+
+Correction (production): `Agent.reconcile_explicit_inferred_credits()` at the `projections()` merge boundary. The explicit row replaces the inferred occurrence when identity is established by series key, `linked_event_id`, a unique generic placeholder, a unique amount among same-day salary streams, or a delayed payday with link/delay wording. Both source IDs and `replacement_reason` are kept. Named second jobs on the same date remain two credits. An ambiguous generic placeholder does not invent a third credit. Later inferred months are unchanged by a one-payment amount. Message amendments still apply to later salary occurrences. Recurrence statistics, `safe_amount` arithmetic, ranking, and the 90-day horizon were not changed.
+
+Verified requests:
+
+| Request | Before (duplicate) | After | Safe before → after | Earliest before → after |
+|---|---|---|---|---|
+| request_13 | event_1161 + event_1087 on 2024-03-15 × €1343.54 | event_1161 once; sources include event_1087 | 941.60 → **325.23** | 2024-03-07 → empty |
+| request_17 | event_1546 + event_1471 on 2026-03-15 × INR 206000 | event_1546 once | 237498.83 unchanged | 2026-03-15 → 2026-04-15 |
+| request_21 | event_1858 + event_1812 on 2026-04-15 × USD 2256 | event_1858 once | 1574.40 unchanged | 2026-04-03 unchanged |
+| request_25 | event_2288 + event_2199 on 2024-03-15 × IDR 28,499,994 | event_2288 once | 2388502.63 unchanged | empty unchanged |
+
+325.23 matches the independent review’s prediction for request_13 and the pre-`737b454` comparison (`evaluation/sample_comparison_deterministic_mode.txt` / `evaluation/sample_baseline.txt` era reports). It is not hardcoded. Remaining 325.23 vs label 433.40 is the pre-existing variable-amount/horizon gap, not this duplicate.
+
+Deterministic and AI 25-sample comparisons after the fix (saved separately; baseline and `output.csv` untouched):
+
+```text
+amount_safe_to_pay: 3/25
+affordability_status: 19/25
+recommended_payment_method: 21/25
+payment_plan: 21/25
+earliest_date_for_full_payment: 17/25  (was 18/25; request_17 earliest left the matching set)
+spending_changes_needed: 20/25       (was 21/25; request_17 now selects a spending change without the extra payday)
+explanation_consistency: 25/25
+```
+
+Only request_13 and request_17 changed versus `evaluation/sample_comparison_deterministic_after_corrections.txt`. Currency errors besides EUR request_13 are unchanged. Tests: 59 passed. Component audit script summary unchanged (13 verified / 1 confirmed failure / 4 not implemented / 1 insufficient).
+
 ## Change inventory
+
+### Salary occurrence reconciliation files
+
+```text
+code/main.py
+code/test_main.py
+evaluation/component_audit.md
+evaluation/progress_report.md
+evaluation/sample_comparison_deterministic_after_salary_occurrence_reconcile.txt
+evaluation/sample_comparison_ai_after_salary_occurrence_reconcile.txt
+```
+
+Preserved untouched: `output.csv`, `evaluation/sample_baseline.txt`, `evaluation/usage_report.md`, `code.zip`.
 
 ### Committed checkpoints
 

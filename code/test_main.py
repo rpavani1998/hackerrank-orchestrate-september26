@@ -96,10 +96,11 @@ class FinancialAgentTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertTrue(any(value < profile.minimum for value in balances.values()))
 
-    def synthetic_event(self, event_id, when, description, category="streaming", event_type="subscription", direction="debit"):
+    def synthetic_event(self, event_id, when, description, category="streaming", event_type="subscription", direction="debit",
+                        status="settled", linked_event_id="", amount=Decimal("10")):
         return Event(
             event_id, "user_test", event_type, description, category, direction,
-            Decimal("10"), "USD", when, when, "settled", "", "fixed", None,
+            amount, "USD", when, when, status, linked_event_id, "fixed", None,
         )
 
     def synthetic_agent(self, events):
@@ -144,6 +145,161 @@ class FinancialAgentTests(unittest.TestCase):
             for index, when in enumerate((date(2025, 1, 1), date(2025, 1, 8), date(2025, 1, 15)))
         ]
         self.assertEqual(self.synthetic_agent(events).recurring_projection("user_test", date(2025, 1, 16), date(2025, 2, 1), "USD"), [])
+
+    def salary_history(self, prefix, description, amount=Decimal("100"), day=1):
+        return [
+            self.synthetic_event(
+                f"{prefix}_{index}", date(2025, month, day), description,
+                category="salary", event_type="income", direction="credit", amount=amount,
+            )
+            for index, month in enumerate((1, 2, 3), start=1)
+        ]
+
+    def salary_request(self, request_date="2025-03-15"):
+        return {
+            "user_id": "user_test", "request_id": "request_test", "request_date": request_date,
+            "requested_amount": "1", "desired_completion_date": "2025-06-30",
+            "allows_partial_payment": "false",
+        }
+
+    def salary_credits(self, projections):
+        return sorted(
+            [p for p in projections if p.direction == "credit" and p.category == "salary"],
+            key=lambda p: (p.when, p.event_id),
+        )
+
+    def test_placeholder_and_named_salary_count_once(self):
+        events = self.salary_history("pay", "Primary household salary") + [
+            self.synthetic_event(
+                "next", date(2025, 4, 1), "Next confirmed salary", "salary", "income", "credit",
+                status="scheduled", amount=Decimal("100"),
+            ),
+        ]
+        credits = self.salary_credits(self.synthetic_agent(events).projections(self.salary_request()))
+        april = [p for p in credits if p.when == date(2025, 4, 1)]
+        self.assertEqual(len(april), 1)
+        self.assertEqual(april[0].event_id, "next")
+        self.assertEqual(april[0].amount, Decimal("100"))
+        self.assertIn("pay_3", april[0].source_event_ids)
+        self.assertEqual(april[0].replacement_reason, "explicit_placeholder_replaces_unique_inferred_payday")
+        self.assertTrue(any(p.when == date(2025, 5, 1) and p.amount == Decimal("100") for p in credits))
+        again = self.salary_credits(self.synthetic_agent(events).projections(self.salary_request()))
+        self.assertEqual([(p.when, p.event_id, p.amount, p.source_event_ids) for p in credits],
+                         [(p.when, p.event_id, p.amount, p.source_event_ids) for p in again])
+
+    def test_two_named_salaries_same_date_are_both_kept(self):
+        events = (
+            self.salary_history("a", "Acme employer payroll")
+            + self.salary_history("b", "Beta employer payroll")
+        )
+        credits = self.salary_credits(self.synthetic_agent(events).projections(self.salary_request()))
+        april = [p for p in credits if p.when == date(2025, 4, 1)]
+        self.assertEqual(len(april), 2)
+        self.assertEqual({p.recurring_ref for p in april}, {"a_3", "b_3"})
+
+    def test_delayed_salary_removes_superseded_inferred_payday(self):
+        events = self.salary_history("pay", "Payroll credit") + [
+            self.synthetic_event(
+                "delayed", date(2025, 4, 8), "Delayed payroll credit", "salary", "income", "credit",
+                status="scheduled", linked_event_id="pay_3", amount=Decimal("100"),
+            ),
+        ]
+        credits = self.salary_credits(self.synthetic_agent(events).projections(self.salary_request()))
+        self.assertFalse(any(p.when == date(2025, 4, 1) for p in credits))
+        self.assertTrue(any(p.when == date(2025, 5, 1) for p in credits))
+        delayed = next(p for p in credits if p.event_id == "delayed")
+        self.assertEqual(delayed.replacement_reason, "explicit_delayed_salary_replaces_inferred_payday")
+        self.assertIn("pay_3", delayed.source_event_ids)
+        self.assertFalse(any(p.when == date(2025, 4, 1) for p in credits))
+
+    def test_one_time_salary_amount_does_not_change_later_months(self):
+        events = self.salary_history("pay", "Payroll credit", amount=Decimal("100")) + [
+            self.synthetic_event(
+                "next", date(2025, 4, 1), "Next confirmed salary", "salary", "income", "credit",
+                status="scheduled", amount=Decimal("40"),
+            ),
+        ]
+        credits = self.salary_credits(self.synthetic_agent(events).projections(self.salary_request()))
+        by_date = {p.when: p for p in credits}
+        self.assertEqual(by_date[date(2025, 4, 1)].amount, Decimal("40"))
+        self.assertEqual(by_date[date(2025, 4, 1)].event_id, "next")
+        self.assertEqual(by_date[date(2025, 5, 1)].amount, Decimal("100"))
+        self.assertEqual(by_date[date(2025, 5, 1)].event_id, "pay_3")
+
+    def test_permanent_salary_amendment_still_applies_to_later_occurrences(self):
+        request = self.sample("request_02")
+        projections = self.agent.projections(request)
+        salaries = {
+            p.when: p.amount
+            for p in projections
+            if p.category == "salary" and p.direction == "credit"
+        }
+        expected_dates = {date(2025, 8, 15), date(2025, 9, 15), date(2025, 10, 15)}
+        self.assertEqual(set(salaries), expected_dates)
+        self.assertEqual({when: salaries[when] for when in expected_dates},
+                         {when: Decimal("42750000") for when in expected_dates})
+
+    def test_ambiguous_generic_salary_does_not_invent_a_third_credit(self):
+        events = (
+            self.salary_history("a", "Acme employer payroll", amount=Decimal("100"))
+            + self.salary_history("b", "Beta employer payroll", amount=Decimal("100"))
+            + [
+                self.synthetic_event(
+                    "next", date(2025, 4, 1), "Next confirmed salary", "salary", "income", "credit",
+                    status="scheduled", amount=Decimal("100"),
+                ),
+            ]
+        )
+        credits = self.salary_credits(self.synthetic_agent(events).projections(self.salary_request()))
+        april = [p for p in credits if p.when == date(2025, 4, 1)]
+        self.assertEqual(len(april), 2)
+        self.assertEqual({p.recurring_ref for p in april}, {"a_3", "b_3"})
+        self.assertFalse(any(p.event_id == "next" for p in april))
+
+    def test_unrelated_subscription_is_unchanged_by_salary_reconcile(self):
+        events = self.salary_history("pay", "Payroll credit") + [
+            self.synthetic_event("s1", date(2025, 1, 1), "Video streaming plan"),
+            self.synthetic_event("s2", date(2025, 2, 1), "Video streaming plan"),
+            self.synthetic_event("s3", date(2025, 3, 1), "Video streaming plan"),
+            self.synthetic_event(
+                "next", date(2025, 4, 1), "Next confirmed salary", "salary", "income", "credit",
+                status="scheduled", amount=Decimal("100"),
+            ),
+        ]
+        projections = self.synthetic_agent(events).projections(self.salary_request())
+        subscriptions = [p for p in projections if p.category == "streaming"]
+        self.assertTrue(subscriptions)
+        self.assertEqual({p.recurring_ref for p in subscriptions}, {"s3"})
+        self.assertEqual(len([p for p in self.salary_credits(projections) if p.when == date(2025, 4, 1)]), 1)
+
+    def test_request_13_next_confirmed_salary_is_one_payday(self):
+        request = self.sample("request_13")
+        credits = [p for p in self.agent.projections(request)
+                   if p.direction == "credit" and p.when == date(2024, 3, 15)]
+        self.assertEqual(len(credits), 1)
+        self.assertEqual(credits[0].event_id, "event_1161")
+        self.assertEqual(credits[0].amount, Decimal("1343.54"))
+        self.assertIn("event_1087", credits[0].source_event_ids)
+        self.assertTrue(credits[0].replacement_reason)
+
+    def test_reconcile_is_idempotent_on_explicit_inferred_pair(self):
+        events = self.salary_history("pay", "Primary household salary") + [
+            self.synthetic_event(
+                "next", date(2025, 4, 1), "Next confirmed salary", "salary", "income", "credit",
+                status="scheduled", amount=Decimal("100"),
+            ),
+        ]
+        agent = self.synthetic_agent(events)
+        request = self.salary_request()
+        start = date(2025, 3, 15)
+        end = date(2025, 6, 13)
+        event_by_id = {event.event_id: event for event in events}
+        explicit = agent.explicit_projection("user_test", start, end, "USD")
+        recurring = agent.recurring_projection("user_test", start, end, "USD")
+        first_e, first_r = agent.reconcile_explicit_inferred_credits(explicit, recurring, event_by_id)
+        second_e, second_r = agent.reconcile_explicit_inferred_credits(first_e, first_r, event_by_id)
+        self.assertEqual(first_e, second_e)
+        self.assertEqual(first_r, second_r)
 
     def test_explicit_event_deduplicates_same_source_series_only(self):
         events = [

@@ -259,6 +259,7 @@ class ProjectionEvent:
     flexibility: str = "fixed"
     recurring_ref: str = ""
     source_event_ids: tuple[str, ...] = ()
+    replacement_reason: str = ""
 
 
 @dataclass
@@ -532,6 +533,130 @@ class Agent:
             "single purchase", "explicitly one time",
         ))
 
+    @classmethod
+    def is_salary_placeholder(cls, description: str) -> bool:
+        text = cls.normalized_description(description)
+        return text in {
+            "next confirmed salary", "next salary", "next payroll",
+            "upcoming salary", "upcoming payroll",
+        } or (text.startswith("next confirmed") and "salary" in text)
+
+    @classmethod
+    def has_salary_delay_marker(cls, description: str) -> bool:
+        text = cls.normalized_description(description)
+        return any(token in text for token in ("delay", "postpon", "reschedul"))
+
+    @staticmethod
+    def merged_source_ids(*groups: Iterable[str]) -> tuple[str, ...]:
+        seen: list[str] = []
+        for group in groups:
+            for item in group:
+                if item and item not in seen:
+                    seen.append(item)
+        return tuple(seen)
+
+    def reconcile_explicit_inferred_credits(
+        self,
+        explicit: list[ProjectionEvent],
+        recurring: list[ProjectionEvent],
+        event_by_id: dict[str, Event],
+    ) -> tuple[list[ProjectionEvent], list[ProjectionEvent]]:
+        """Replace an inferred salary occurrence when an explicit row is the same payday.
+
+        Named second jobs stay independent. A generic 'next confirmed salary' row is
+        not a second employer. Ambiguous matches do not invent an extra credit.
+        """
+        used: set[int] = set()
+        resolved: list[ProjectionEvent] = []
+
+        def salary_inferred() -> list[tuple[int, ProjectionEvent, Event]]:
+            found = []
+            for index, projection in enumerate(recurring):
+                if index in used or projection.direction != "credit" or projection.category != "salary":
+                    continue
+                source = event_by_id.get(projection.recurring_ref) or event_by_id.get(projection.event_id)
+                if source is not None:
+                    found.append((index, projection, source))
+            return found
+
+        for exp in explicit:
+            exp_event = event_by_id.get(exp.event_id)
+            if exp.direction != "credit" or exp.category != "salary" or exp_event is None:
+                resolved.append(exp)
+                continue
+            placeholder = self.is_salary_placeholder(exp_event.description)
+            delayed = self.has_salary_delay_marker(exp_event.description)
+            linked = exp_event.linked_event_id
+            same_day: list[tuple[int, ProjectionEvent, Event, bool, bool]] = []
+            delayed_rows: list[tuple[int, ProjectionEvent, Event, bool, bool]] = []
+            for index, inf, source in salary_inferred():
+                series_match = self.recurrence_series_key(exp_event) == self.recurrence_series_key(source)
+                linked_match = bool(linked) and linked in {inf.recurring_ref, inf.event_id, *inf.source_event_ids}
+                if inf.when == exp.when:
+                    same_day.append((index, inf, source, series_match, linked_match))
+                    continue
+                delta = (exp.when - inf.when).days
+                if (delayed or linked_match) and 0 < delta <= 27:
+                    delayed_rows.append((index, inf, source, series_match, linked_match))
+
+            chosen: ProjectionEvent | None = None
+            chosen_index: int | None = None
+            reason = ""
+            strong_same = [row for row in same_day if row[3] or row[4]]
+            if len(strong_same) == 1:
+                chosen_index, chosen = strong_same[0][0], strong_same[0][1]
+                reason = "explicit_replaces_inferred_same_payday"
+            elif len(strong_same) > 1:
+                amount_hits = [row for row in strong_same if row[1].amount == exp.amount]
+                if len(amount_hits) == 1:
+                    chosen_index, chosen = amount_hits[0][0], amount_hits[0][1]
+                    reason = "explicit_replaces_inferred_same_payday"
+                else:
+                    reason = "ambiguous_salary_occurrence"
+            elif placeholder and len(same_day) == 1:
+                chosen_index, chosen = same_day[0][0], same_day[0][1]
+                reason = "explicit_placeholder_replaces_unique_inferred_payday"
+            elif placeholder and len(same_day) > 1:
+                amount_hits = [row for row in same_day if row[1].amount == exp.amount]
+                if len(amount_hits) == 1:
+                    chosen_index, chosen = amount_hits[0][0], amount_hits[0][1]
+                    reason = "explicit_placeholder_replaces_amount_matched_inferred_payday"
+                else:
+                    reason = "ambiguous_salary_occurrence"
+            elif delayed_rows:
+                strong_delay = [row for row in delayed_rows if row[3] or row[4]]
+                pool = strong_delay or delayed_rows
+                if len(pool) == 1:
+                    chosen_index, chosen = pool[0][0], pool[0][1]
+                    reason = "explicit_delayed_salary_replaces_inferred_payday"
+                else:
+                    amount_hits = [row for row in pool if row[1].amount == exp.amount]
+                    if len(amount_hits) == 1:
+                        chosen_index, chosen = amount_hits[0][0], amount_hits[0][1]
+                        reason = "explicit_delayed_salary_replaces_inferred_payday"
+                    else:
+                        reason = "ambiguous_salary_occurrence"
+
+            if chosen is not None and chosen_index is not None:
+                used.add(chosen_index)
+                resolved.append(ProjectionEvent(
+                    exp.when, exp.amount, exp.direction, exp.category, exp.event_id,
+                    exp.flexibility, exp.recurring_ref,
+                    self.merged_source_ids(
+                        exp.source_event_ids, chosen.source_event_ids,
+                        (exp.event_id, chosen.event_id, chosen.recurring_ref),
+                    ),
+                    reason,
+                ))
+            elif reason == "ambiguous_salary_occurrence" and placeholder:
+                # Safer interpretation: do not add a generic extra payday on top
+                # of two named streams whose identity cannot be resolved.
+                continue
+            else:
+                resolved.append(exp)
+
+        return resolved, [row for index, row in enumerate(recurring) if index not in used]
+
     def analysis_recurring_projection(self, request: dict[str, str], start: date, end: date, home: str) -> list[ProjectionEvent]:
         as_of = ddate(request["request_date"]) or date.min
         analysis = self.data.financial_analyses.get((request["user_id"], request["request_id"], as_of))
@@ -683,6 +808,7 @@ class Agent:
             and (p.when, self.recurrence_series_key(event_by_id[p.recurring_ref]), p.direction)
             not in explicit_keys
         ]
+        explicit, recurring = self.reconcile_explicit_inferred_credits(explicit, recurring, event_by_id)
         result = explicit + recurring
         relevant_messages = self.relevant_messages(request["user_id"], request["request_id"], start)
         message_facts = self.evidence_message_facts(relevant_messages, profile.home_currency)
@@ -707,8 +833,11 @@ class Agent:
         for p in result:
             applicable = [amount for when, amount in amendments if when <= p.when]
             if p.category == "salary" and applicable:
-                p = ProjectionEvent(p.when, applicable[-1], p.direction, p.category,
-                                    p.event_id, p.flexibility, p.recurring_ref)
+                p = ProjectionEvent(
+                    p.when, applicable[-1], p.direction, p.category,
+                    p.event_id, p.flexibility, p.recurring_ref,
+                    p.source_event_ids, p.replacement_reason,
+                )
             adjusted.append(p)
         result = adjusted + message_salary
         return result
@@ -746,6 +875,7 @@ class Agent:
                 result.append(ProjectionEvent(
                     p.when, c.new_amount, p.direction, p.category, p.event_id,
                     p.flexibility, p.recurring_ref, p.source_event_ids,
+                    p.replacement_reason,
                 ))
             else:
                 result.append(p)
