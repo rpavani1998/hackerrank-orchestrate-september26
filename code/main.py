@@ -670,7 +670,7 @@ class Agent:
             return None
         gaps = [(b - a).days for a, b in zip(sorted(dates), sorted(dates)[1:])]
         med = int(round(median(gaps)))
-        if med in range(4, 12) or med in range(13, 18) or med in range(27, 33) or med in range(58, 63):
+        if med in range(4, 12) or med in range(13, 18) or med in range(19, 24) or med in range(27, 33) or med in range(58, 63):
             close = sum(abs(g - med) <= max(1, round(med * .12)) for g in gaps)
             return med if close >= max(2, len(gaps) * .6) else None
         return None

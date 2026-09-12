@@ -13,6 +13,8 @@ from financial_analysis import (
     AnalysisValidationError,
     build_financial_analysis,
     build_prompt,
+    cadence,
+    cadence_description,
     validate_proposals,
 )
 from main import Data, Event, load_evidence_facts
@@ -116,6 +118,12 @@ class FinancialAnalysisTests(unittest.TestCase):
         validation = validate_proposals({"patterns": [valid, dict(valid, source_event_ids=["event_1", "event_3"]), dict(valid, source_event_ids=["event_unknown", "event_2"]) ]}, events, "user_a")
         self.assertEqual(len(validation.accepted), 1)
         self.assertEqual(len(validation.rejected), 2)
+
+    def test_cadence_accepts_supported_21_day_history(self):
+        dates = [date(2025, 1, 2), date(2025, 1, 23), date(2025, 2, 13), date(2025, 3, 6)]
+        self.assertEqual(cadence(dates), 21)
+        self.assertEqual(cadence_description(21), "three_week_fixed_day")
+        self.assertIsNone(cadence(dates[:2]))
 
     def test_recurring_salary_credit_is_a_valid_pattern(self):
         events = {

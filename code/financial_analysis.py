@@ -227,7 +227,7 @@ def cadence(dates: list[date]) -> int | None:
     ordered = sorted(dates)
     gaps = [(b - a).days for a, b in zip(ordered, ordered[1:])]
     med = int(round(median(gaps)))
-    accepted = med in range(4, 12) or med in range(13, 18) or med in range(27, 33) or med in range(58, 63)
+    accepted = med in range(4, 12) or med in range(13, 18) or med in range(19, 24) or med in range(27, 33) or med in range(58, 63)
     if not accepted:
         return None
     close = sum(abs(gap - med) <= max(1, round(med * 0.12)) for gap in gaps)
@@ -241,6 +241,8 @@ def cadence_description(interval_days: int | None) -> str:
         return "weekly_fixed_day"
     if interval_days in range(13, 18):
         return "biweekly_fixed_day"
+    if interval_days in range(19, 24):
+        return "three_week_fixed_day"
     if interval_days in range(27, 33):
         return "monthly_calendar_like"
     if interval_days in range(58, 63):

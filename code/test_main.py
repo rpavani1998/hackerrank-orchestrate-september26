@@ -427,6 +427,25 @@ class FinancialAgentTests(unittest.TestCase):
         agent, request = self.evidence_agent(events, messages, [fact], "2025-03-15")
         self.assertFalse(any(p.event_id == "message_payroll" for p in agent.projections(request)))
 
+    def test_exact_21_day_variable_spending_is_forecast(self):
+        events = [
+            self.synthetic_event("d1", date(2025, 1, 2), "Lunch with colleagues", "dining", "expense", amount=Decimal("40")),
+            self.synthetic_event("d2", date(2025, 1, 23), "Lunch with colleagues", "dining", "expense", amount=Decimal("40")),
+            self.synthetic_event("d3", date(2025, 2, 13), "Lunch with colleagues", "dining", "expense", amount=Decimal("42")),
+        ]
+        projection = self.synthetic_agent(events).recurring_projection("user_test", date(2025, 2, 20), date(2025, 4, 10), "USD")
+        dining = [p for p in projection if p.category == "dining"]
+        self.assertGreaterEqual(len(dining), 2)
+        gaps = [(b.when - a.when).days for a, b in zip(dining, dining[1:])]
+        self.assertTrue(gaps and all(g == 21 for g in gaps))
+
+    def test_two_isolated_transactions_are_not_recurring(self):
+        events = [
+            self.synthetic_event("d1", date(2025, 1, 2), "Lunch with colleagues", "dining", "expense"),
+            self.synthetic_event("d2", date(2025, 1, 23), "Lunch with colleagues", "dining", "expense"),
+        ]
+        self.assertEqual(self.synthetic_agent(events).recurring_projection("user_test", date(2025, 1, 24), date(2025, 3, 1), "USD"), [])
+
     def test_sparse_confirmed_salary_continues_from_next_confirmed_row(self):
         events = [
             self.synthetic_event("event_25", date(2024, 2, 15), "Prorated first salary", "salary", "income", "credit", amount=Decimal("12826")),

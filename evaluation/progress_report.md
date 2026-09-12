@@ -634,6 +634,12 @@ Important untested behavior includes:
 - plan ranking across all competing plan types
 - explanation details when spending changes are selected
 
+## 21-day cadence checkpoint
+
+`Agent.cadence()` and `financial_analysis.cadence()` now accept a 19–24 day median (exact 21-day streams) without treating it as a calendar month. Variable merchants stay one category series; named commitments stay separate; two isolated rows still do not recur. Amount statistics were not changed.
+
+request_03 safe 1,089,018.06 → **917,826.07** IDR (expected 873,000). Deterministic amount matches **2/25** because previously capped samples 09 and 12 now reserve 21-day dining/transport. Those expenses are supported; they were not removed to recover matches. AI sample scopes were built before this cadence, so AI mode still reports 4/25 where analysis omits 21-day streams. Comparisons: `evaluation/sample_comparison_deterministic_after_21day_cadence.txt`.
+
 ## Sparse confirmed salary checkpoint
 
 A scheduled `Next confirmed salary` plus at least one same calendar-day historical salary ~one month earlier now continues at the **confirmed** amount. Recurrence still requires three settled points unless that confirmation exists. Prizes/refunds/invoices are excluded. request_01: Mar/Apr/May 15 at ZAR 23320; safe **25256** matches the cap. request_15: two first-job rows + `once` first-salary message; no invented Feb/Mar payroll (safe remains 0 vs 83.05). Sample amount matches **4/25**. Comparisons: `evaluation/sample_comparison_deterministic_after_sparse_salary.txt`.
