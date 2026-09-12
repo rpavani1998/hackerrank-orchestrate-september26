@@ -443,6 +443,44 @@ A full diff of the two comparison artifacts is empty, so this focused fix caused
 
 The diagnostic and tests did not invoke `code/main.py:main()` and did not overwrite `output.csv`. No commit or push was performed.
 
+### Incremental evidence-extraction interface
+
+Model access was inspected without exposing secrets. No model SDK, OCR/vision package, dependency manifest, or credential environment variable is available. Outbound HTTPS reaches the provider network, but the unauthenticated endpoint returned HTTP 401. No model call was attempted.
+
+The complete evidence inventory is saved at:
+
+```text
+evaluation/evidence_inventory.md
+```
+
+It covers all 215 messages, their source/request/event links and non-authoritative triage labels, all 16 images and their user/request/event links, manual reference amounts, current information gaps, and the `message_14` delayed-refund fixture.
+
+Added `code/evidence_extraction.py` as a standard-library-only provider-neutral layer. It provides:
+
+- strict `EvidenceFact` validation for source identifiers, supplied references, action, amount/currency, dates and meanings, recurrence scope, supporting text, missing fields, ambiguities, and conflicts;
+- untrusted-evidence prompt delimiting;
+- cache keys containing source content, model name, prompt version, and schema version;
+- cache-hit/call metadata for model name, token counts, retries, and estimated cost;
+- an explicit `UnavailableModelProvider` blocker;
+- an `EvidenceLedger` that rejects duplicate application when deterministic and model paths converge.
+
+The first message category is explicit transaction-status evidence, beginning with delayed refunds. `message_14` is linked to `request_20`/`event_1785` and supports `action=delay` with no invented amount or settlement date. The interface is not wired into `Agent`: deterministic financial authority and the existing payroll parser remain unchanged until a real provider is configured.
+
+Post-interface verification:
+
+```text
+extraction-contract tests: 7 passed
+full suite: 15 passed
+sample comparison: 25 samples, 0 exceptions
+sample fields: unchanged from evaluation/sample_baseline.txt
+```
+
+The new comparison output is saved separately at:
+
+```text
+evaluation/sample_comparison_after_extraction_interface.txt
+```
+
 ### Previously reported checks, not rerun during this step
 
 The following checks were reported as passing before this documentation step:
@@ -492,9 +530,20 @@ Important untested behavior includes:
 
 ## Change inventory
 
-### Committed checkpoint
+### Committed checkpoints
 
-The sample-comparison harness and its reproducible baseline were committed together:
+The completed salary fix and its evidence-backed diagnostics were preserved together before this interface work:
+
+```text
+a42fc85 fix: persist salary amendments across recurring projections
+  code/main.py
+  code/test_main.py
+  evaluation/progress_report.md
+  evaluation/request_targets_investigation.txt
+  evaluation/sample_comparison_after_salary_fix.txt
+```
+
+The original harness and baseline remain in:
 
 ```text
 5fcccc1 test: add sample comparison harness and baseline
@@ -502,19 +551,19 @@ The sample-comparison harness and its reproducible baseline were committed toget
   evaluation/sample_baseline.txt
 ```
 
-### Current uncommitted change inventory
+### Current uncommitted extraction-interface change
 
-The current working-tree changes for this uncommitted iteration are:
+The current working-tree changes for this separate interface checkpoint are:
 
 ```text
-M  code/main.py
-?? code/test_main.py
+?? code/evidence_extraction.py
+?? code/test_evidence_extraction.py
+?? evaluation/evidence_inventory.md
+?? evaluation/sample_comparison_after_extraction_interface.txt
  M evaluation/progress_report.md
-?? evaluation/request_targets_investigation.txt
-?? evaluation/sample_comparison_after_salary_fix.txt
 ```
 
-Previously untracked unrelated artifacts remain preserved and are not part of this fix:
+Previously untracked unrelated artifacts remain preserved and are not part of this interface:
 
 ```text
 .gitignore
@@ -528,22 +577,21 @@ output.csv
 
 ### Production/output preservation
 
-During this targeted investigation:
+During this extraction-interface iteration:
 
-- `code/main.py` changed only to persist explicit salary amendments to later recurring salary occurrences.
-- `code/test_main.py` gained the focused request-02 regression test.
-- `evaluation/request_targets_investigation.txt` records the pre-fix four-request audit.
-- `evaluation/sample_comparison_after_salary_fix.txt` records the post-fix all-sample comparison.
+- `code/main.py` and `output.csv` were not changed.
+- The deterministic payroll parser and financial engine remain the authority.
+- No model, OCR, or vision call was made because credentials and SDKs are unavailable.
+- No message or image fact was applied to projections.
 - `evaluation/sample_baseline.txt` was preserved unchanged.
-- No historical-maxima policy, correction factor, or extra reserve was added.
-- No commit or push was performed.
-- `output.csv` was not targeted or overwritten; prediction generation was not invoked.
+- No recurrence statistic, correction factor, or extra reserve was introduced.
+- No commit or push has been performed for this interface checkpoint.
 
 ## Next steps
 
-The one confirmed defect from this iteration is corrected locally but intentionally uncommitted. Before any further policy change:
-
-1. Obtain clarification on the recurrence reserve statistic and expected low-point date for the remaining safe-amount discrepancies.
-2. Keep `request_01`, `request_05`, and `request_20` as unresolved audit cases; do not remove source-backed projected events or add unsupported reserves.
-3. Review the salary-amendment diff and focused test, then create one coherent local checkpoint if accepted.
-4. Preserve `evaluation/sample_baseline.txt` as the original baseline and compare any future policy experiment in a new artifact.
+1. Configure a supported model credential and SDK through environment variables; never place credentials in the repository.
+2. Add one provider adapter for the validated `message_14` delayed-refund schema, with actual call/token/retry/cost metrics and cache reuse reporting.
+3. Compare model extraction with the deterministic parser without allowing both paths to apply the same source fact.
+4. Run the message integration against focused fixtures and all 25 samples before enabling financial application.
+5. Add image extraction only as a separate checkpoint after messages are verified; retain manual image values as reference fixtures and reject unresolved amounts rather than silently omitting events.
+6. Preserve `evaluation/sample_baseline.txt`, keep `output.csv` unchanged, and measure extraction accuracy separately from affordability matches.
