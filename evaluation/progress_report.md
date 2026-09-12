@@ -793,6 +793,39 @@ future-credit evidence, not merely a description keyword. The boundary fixture
 covers supported amendments, request isolation, rejected-pattern exclusion, and
 explicit/inferred deduplication.
 
+### Safe-amount forecast diagnosis checkpoint
+
+`code/diagnose_safe_amount.py` generated `evaluation/safe_amount_diagnosis.md` without
+writing `output.csv`. It records all 25 currencies, balances, protected minimums,
+requested and expected amounts, actual safe amounts, signed `actual - expected`
+differences, absolute differences, full-horizon baseline lows, cap states, analysis
+provenance, fallback reasons, and expected-payment replay results. Monetary errors
+are reported per currency and are never summed across currencies.
+
+The current artifact has 3/25 exact safe-amount matches. All three are
+requested-amount caps (`request_09`, `request_12`, and `request_16`); there are no
+uncapped exact matches. Four samples have positive expected amounts but zero current
+safe amount, and each has a baseline forecast breach. The expected payment passes the
+full current forecast for 17/25 samples and fails for 8/25; those outcomes describe
+the current forecast and do not prove the solved sample amount is feasible under it.
+
+The report traces source IDs, source status, amount statistics, conversion dates,
+recurrence anchors, evidence status, explicit rows, and same-day ordering at
+representative low points. It also compares, diagnostically only, median-debit,
+latest-debit, and 30-day-monthly timing alternatives. No alternative establishes a
+source-backed correction: each changes several requests without producing uncapped
+sample agreement, and the solved outputs do not specify the disputed statistic or
+calendar-month convention. Existing component and integration tests remain green.
+
+No production forecast rule was changed. The precise unresolved convention is the
+organizer-defined reserve statistic for variable and irregular recurring expenses
+(and, secondarily, whether monthly recurrence advances by calendar month with
+month-end clamping or a fixed elapsed-day interval). Organizer question: **For
+`amount_safe_to_pay`, should a forecast reserve use the recent median, an upper
+quartile, or another specified statistic for irregular recurring expenses, and should
+monthly occurrences preserve the calendar day with month-end clamping or use an
+elapsed-day cadence?**
+
 ## Next bounded task
 
 1. Automate extraction of the 16 supplied images as a separate checkpoint, preserving amount roles such as total, already-paid, and amount due.
