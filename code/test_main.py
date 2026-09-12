@@ -427,6 +427,34 @@ class FinancialAgentTests(unittest.TestCase):
         agent, request = self.evidence_agent(events, messages, [fact], "2025-03-15")
         self.assertFalse(any(p.event_id == "message_payroll" for p in agent.projections(request)))
 
+    def test_percentage_rent_applies_to_next_regular_occurrence_not_arrears(self):
+        events = [
+            self.synthetic_event("event_1", date(2025, 1, 1), "Monthly rent fixed", "rent", "expense", amount=Decimal("57100")),
+            self.synthetic_event("event_2", date(2025, 2, 1), "Monthly rent fixed", "rent", "expense", amount=Decimal("57100")),
+            self.synthetic_event("event_3", date(2025, 3, 1), "Monthly rent fixed", "rent", "expense", amount=Decimal("57100")),
+            self.synthetic_event("event_4", date(2025, 3, 16), "Outstanding rent balance", "rent", "expense",
+                                 status="scheduled", amount=Decimal("100000")),
+        ]
+        messages = [{"message_id": "message_12", "user_id": "user_test", "request_id": "request_test",
+                     "sent_at": "2025-03-01", "message_text": "The renewed lease increases monthly rent by 12%. The new amount will be used for the next rent payment."}]
+        fact = EvidenceFact.from_mapping({
+            "source_id": "message_12", "source_kind": "message", "supplied_user_id": None,
+            "supplied_request_id": None, "supplied_event_id": None, "transaction_type": "rent",
+            "update_status": "amended", "action": "amendment", "amount": None, "currency": None,
+            "dates": [], "recurrence_scope": "future_occurrences",
+            "supporting_text": "The renewed lease increases monthly rent by 12%. The new amount will be used for the next rent payment.",
+            "missing_fields": ["amount", "currency", "dates"], "ambiguities": [], "conflicts": [],
+        })
+        agent, request = self.evidence_agent(events, messages, [fact], "2025-03-12")
+        rents = [p for p in agent.projections(request) if p.category == "rent"]
+        regular = [p for p in rents if p.when >= date(2025, 4, 1) and "outstanding" not in (p.replacement_reason or "")]
+        self.assertTrue(regular)
+        self.assertTrue(all(p.amount == Decimal("63952") for p in regular))
+        arrears = [p for p in rents if p.event_id == "event_4"]
+        self.assertEqual(arrears[0].amount, Decimal("100000"))
+        again = [p for p in agent.projections(request) if p.category == "rent" and p.when >= date(2025, 4, 1) and p.event_id != "event_4"]
+        self.assertEqual([p.amount for p in regular], [p.amount for p in again])
+
     def test_exact_21_day_variable_spending_is_forecast(self):
         events = [
             self.synthetic_event("d1", date(2025, 1, 2), "Lunch with colleagues", "dining", "expense", amount=Decimal("40")),

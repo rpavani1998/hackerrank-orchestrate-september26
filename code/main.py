@@ -35,6 +35,9 @@ DATASET = ROOT / "dataset"
 OUTPUT = ROOT / "output.csv"
 DAYS = 90
 CENT = Decimal("0.01")
+RENT_PERCENT_RE = re.compile(
+    r"(?i)(increases?|decreases?|reduces?)\s+(?:the\s+)?(?:monthly\s+)?rent\s+by\s+(\d+(?:\.\d+)?)\s*%"
+)
 
 OUTPUT_COLUMNS = [
     "request_id", "amount_safe_to_pay", "affordability_status",
@@ -272,6 +275,16 @@ class ProjectionEvent:
     recurring_ref: str = ""
     source_event_ids: tuple[str, ...] = ()
     replacement_reason: str = ""
+
+
+@dataclass(frozen=True)
+class RelativeExpenseAmendment:
+    percent: Decimal
+    direction: str
+    category: str
+    trigger: str
+    source_id: str
+    effective_from: date | None = None
 
 
 @dataclass(frozen=True)
@@ -613,6 +626,76 @@ class Agent:
                     existing.add((when, "credit", "salary"))
                 when = add_months(when, 1)
         return result
+
+    def parse_relative_rent_amendment(self, text: str, source_id: str) -> RelativeExpenseAmendment | None:
+        match = RENT_PERCENT_RE.search(text or "")
+        if not match:
+            return None
+        verb, percent_text = match.group(1).lower(), match.group(2)
+        direction = "increase" if verb.startswith("increase") else "decrease"
+        return RelativeExpenseAmendment(Decimal(percent_text), direction, "rent", "next_occurrence", source_id)
+
+    def relative_expense_amendments(self, messages: Iterable[dict[str, str]]) -> list[RelativeExpenseAmendment]:
+        found: list[RelativeExpenseAmendment] = []
+        seen: set[tuple[str, str, str]] = set()
+        for message in messages:
+            texts = [message.get("message_text", "")]
+            for fact in self.facts_for_message(message["message_id"]):
+                if fact.transaction_type == "rent" and fact.update_status == "amended":
+                    texts.append(fact.supporting_text)
+            for text in texts:
+                amendment = self.parse_relative_rent_amendment(text, message["message_id"])
+                if amendment is None:
+                    continue
+                key = (amendment.source_id, amendment.category, str(amendment.percent))
+                if key in seen:
+                    continue
+                seen.add(key)
+                found.append(amendment)
+        return found
+
+    def apply_relative_expense_amendments(
+        self, projections: list[ProjectionEvent], messages: Iterable[dict[str, str]],
+        event_by_id: dict[str, Event], start: date,
+    ) -> list[ProjectionEvent]:
+        amendments = self.relative_expense_amendments(messages)
+        if not amendments:
+            return projections
+        regular = []
+        for projection in projections:
+            if projection.direction != "debit" or projection.category != "rent":
+                continue
+            event = event_by_id.get(projection.recurring_ref) or event_by_id.get(projection.event_id)
+            if event is None or "outstanding" in self.normalized_description(event.description):
+                continue
+            regular.append(projection)
+        next_regular = min((p.when for p in regular if p.when >= start), default=None)
+        updated: list[ProjectionEvent] = []
+        for projection in projections:
+            event = event_by_id.get(projection.recurring_ref) or event_by_id.get(projection.event_id)
+            if (
+                projection.direction != "debit" or projection.category != "rent" or event is None
+                or "outstanding" in self.normalized_description(event.description)
+                or next_regular is None or projection.when < next_regular
+            ):
+                updated.append(projection)
+                continue
+            source_amount = event.amount
+            amount = source_amount
+            reasons = []
+            for amendment in amendments:
+                if amendment.category != "rent":
+                    continue
+                factor = amendment.percent / Decimal(100)
+                amount = source_amount * (1 + factor) if amendment.direction == "increase" else source_amount * (1 - factor)
+                source_amount = amount
+                reasons.append(f"relative_{amendment.direction}_{amendment.percent}_{amendment.source_id}")
+            updated.append(ProjectionEvent(
+                projection.when, amount, projection.direction, projection.category,
+                projection.event_id, projection.flexibility, projection.recurring_ref,
+                projection.source_event_ids, "|".join(reasons),
+            ))
+        return updated
 
     def salary_stream_key(self, projection: ProjectionEvent) -> str:
         if projection.recurring_ref:
@@ -1033,6 +1116,7 @@ class Agent:
         generated_dates = {p.when for p in generated}
         result = [p for p in result if not (p.category == "salary" and p.when in generated_dates)]
         result = result + generated
+        result = self.apply_relative_expense_amendments(result, relevant_messages, event_by_id, start)
         return result
 
     def eligible_changes(self, request: dict[str, str], projections: list[ProjectionEvent]) -> list[Change]:
