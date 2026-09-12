@@ -725,7 +725,7 @@ Commit `737b454` corrected two audited component defects before analysis work:
 - `transaction_type` and `update_status` are authoritative; legacy `action` must match a deterministic status mapping. Source wording rejects a `pending` label when it only describes a delayed/not-reached credit. Invalid provider outputs are recorded as rejected and are never cached or applied.
 - Recurrence uses named source-defined streams for commitments/subscriptions and category streams for variable groceries/transport/dining/shopping/entertainment. Explicit one-time markers are excluded, source IDs are retained, and explicit/inferred deduplication compares the same stream rather than category alone.
 
-The correction suite now has 46 tests passing. A read-only deterministic sample comparison has zero exceptions and reports 3/25 safe-amount matches, 19/25 affordability matches, 21/25 payment-method matches, 21/25 payment-plan matches, 18/25 earliest-date matches, 21/25 spending-change matches, and 25/25 explanation-consistency matches. These remain diagnostics, not labels to tune toward.
+The correction suite now has 50 tests passing. A read-only deterministic sample comparison has zero exceptions and reports 3/25 safe-amount matches, 19/25 affordability matches, 21/25 payment-method matches, 21/25 payment-plan matches, 18/25 earliest-date matches, 21/25 spending-change matches, and 25/25 explanation-consistency matches. These remain diagnostics, not labels to tune toward.
 
 ### Scoped financial-history analysis
 
@@ -768,8 +768,30 @@ preserved as review items. The trace demonstrates source events
 When the analysis artifact is supplied, AI mode uses validated source groups for
 forecast construction while recalculating cadence and amounts deterministically.
 The deterministic mode remains unchanged by the analysis artifact. Both modes ran
-all 25 samples with zero exceptions and no output-field differences. The analysis
-artifact was not used as a reason to claim prediction improvement.
+all 25 samples with zero exceptions; the current matched artifacts show the same
+field-level counts, with one diagnostic safe-amount difference on `request_01`.
+The analysis artifact was not used as a reason to claim prediction improvement.
+
+### Component-first verification checkpoint
+
+`code/audit_financial_analysis.py` and `evaluation/analysis_coverage_report.md` now
+verify exact `(user_id, request_id, as_of_date)` scopes, artifact origin (cached AI,
+live AI, or deterministic construction), accepted/rejected proposal counts,
+forecast patterns actually consumed by `Agent.projections`, fallback reasons, and
+the 250-request artifact intersection. Strict mode passes all 25 sample scopes with
+the sample artifact and exits `2` when intentionally pointed at the separate
+250-request artifact, where the exact intersection is `0/25`.
+
+Independent source checks for the four cached live scopes report zero incorrect
+accepted patterns, zero useful patterns rejected by validation, zero variable-stream
+omissions, zero double-claimed source events, and zero unsupported future income.
+Seven recurring commitments are not covered by the live AI proposals, all in
+`request_20`; deterministic residual patterns still cover them. Unresolved evidence
+remains explicitly listed rather than forecast. Recurring salary credits are now
+validated as credit patterns; gig/platform income is forecastable only with explicit
+future-credit evidence, not merely a description keyword. The boundary fixture
+covers supported amendments, request isolation, rejected-pattern exclusion, and
+explicit/inferred deduplication.
 
 ## Next bounded task
 

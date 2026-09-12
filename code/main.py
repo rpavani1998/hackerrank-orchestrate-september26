@@ -566,10 +566,13 @@ class Agent:
             claimed.update(source_ids)
             direction = group[0].direction
             if direction == "credit":
-                stream_text = " ".join(event.description.lower() for event in group)
-                if final_income_date != date.min or not any(word in stream_text for word in ("salary", "payroll", "wage", "gaji")):
+                # Analysis inputs carry the deterministic eligibility decision.  A
+                # historical platform/gig stream is not future income without
+                # explicit confirmation, while a confirmed future credit may be
+                # forecast regardless of its label.
+                if item.get("income_eligibility") not in {"recurring_salary_supported", "confirmed_future_credit"}:
                     continue
-                if any(word in stream_text for word in ("commission", "bonus", "payout", "earning", "invoice", "project", "retainer", "freelance")):
+                if final_income_date != date.min and item.get("income_eligibility") != "confirmed_future_credit":
                     continue
             dates = sorted(event.settlement_date for event in group)
             step = self.cadence(dates)

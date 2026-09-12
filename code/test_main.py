@@ -2,6 +2,7 @@ import csv
 import sys
 import unittest
 from datetime import date, timedelta
+from evidence_extraction import EvidenceFact
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -161,6 +162,40 @@ class FinancialAgentTests(unittest.TestCase):
         april = [p for p in projections if p.when == date(2025, 4, 1)]
         self.assertEqual(len(april), 1)
         self.assertEqual(april[0].event_id, "explicit")
+
+    def test_analysis_boundary_applies_supported_change_without_duplication_or_leakage(self):
+        events = [
+            self.synthetic_event(f"salary_{index}", when, "Employer salary", "salary", "income", "credit")
+            for index, when in enumerate((date(2025, 1, 1), date(2025, 2, 1), date(2025, 3, 1)))
+        ] + [
+            self.synthetic_event(f"sub_{index}", when, "Video streaming plan")
+            for index, when in enumerate((date(2025, 1, 1), date(2025, 2, 1), date(2025, 3, 1)))
+        ] + [self.synthetic_event("sub_explicit", date(2025, 4, 1), "Video streaming plan")]
+        profile = Profile("user_test", "USD", Decimal("1000"), Decimal("100"), set(), set(), set(), set(), {"full_payment"}, None)
+        message = {"message_id": "message_999", "user_id": "user_test", "request_id": "request_test", "sent_at": "2025-03-10", "text": "Salary is 20 from April."}
+        fact = EvidenceFact.from_mapping({
+            "source_id": "message_999", "source_kind": "message", "supplied_user_id": None,
+            "supplied_request_id": None, "supplied_event_id": None, "transaction_type": "salary",
+            "update_status": "amended", "action": "amendment", "amount": "20", "currency": "USD",
+            "dates": [{"date": "2025-04-01", "meaning": "effective_date"}], "recurrence_scope": "future_occurrences",
+            "supporting_text": "Salary is 20 from April.", "missing_fields": [], "ambiguities": [], "conflicts": [],
+        })
+        data = SimpleNamespace(
+            events_by_user={"user_test": events}, profiles={"user_test": profile}, messages_by_user={"user_test": [message]},
+            evidence_facts={"message_999": fact}, convert=lambda amount, _source, _target, _when: amount,
+            financial_analyses={("user_test", "request_test", date(2025, 3, 15)): {"forecast_inputs": [
+                {"pattern_id": "salary", "pattern_type": "recurring_commitment", "category": "salary", "label": "Employer salary", "source_event_ids": ["salary_0", "salary_1", "salary_2"], "forecastable": True, "income_eligibility": "recurring_salary_supported"},
+                {"pattern_id": "subscription", "pattern_type": "recurring_commitment", "category": "streaming", "label": "Video streaming plan", "source_event_ids": ["sub_0", "sub_1", "sub_2"], "forecastable": True},
+            ]}},
+        )
+        request = {"user_id": "user_test", "request_id": "request_test", "request_date": "2025-03-15", "requested_amount": "1", "desired_completion_date": "2025-04-30", "allows_partial_payment": "false"}
+        projections = Agent(data).projections(request)
+        april_salary = [p for p in projections if p.when == date(2025, 4, 1) and p.category == "salary"]
+        april_subscriptions = [p for p in projections if p.when == date(2025, 4, 1) and p.category == "streaming"]
+        self.assertEqual([(p.amount, p.event_id) for p in april_salary], [(Decimal("20"), "message_payroll")])
+        self.assertEqual(len(april_subscriptions), 1)
+        self.assertEqual(april_subscriptions[0].event_id, "sub_explicit")
+        self.assertFalse(any(p.event_id in {"rejected", "rejected_source"} for p in projections))
 
     def test_validated_analysis_does_not_forecast_payout_income(self):
         events = [

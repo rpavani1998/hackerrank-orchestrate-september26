@@ -190,13 +190,35 @@ def explicit_one_time(event: Any) -> bool:
 
 
 def supported_income_forecast(events: list[Any]) -> bool:
+    """Identify a recurring salary-like history, not a confirmed future credit."""
     if not events or events[0].direction != "credit":
         return True
     text = " ".join(event.description.lower() for event in events)
-    return (
-        any(word in text for word in ("salary", "payroll", "wage", "gaji"))
-        and not any(word in text for word in ("commission", "bonus", "payout", "earning", "invoice", "project", "retainer", "freelance"))
-    )
+    return any(word in text for word in ("salary", "payroll", "wage", "gaji"))
+
+
+def income_eligibility(events: list[Any], evidence: list[tuple[Any, EvidenceFact]], as_of: date) -> str:
+    if not events or events[0].direction != "credit":
+        return "not_income"
+    if supported_income_forecast(events):
+        return "recurring_salary_supported"
+    source_ids = {event.event_id for event in events}
+    for _message, fact in evidence:
+        if fact.supplied_event_id not in source_ids:
+            continue
+        if fact.transaction_type not in {"salary", "payout", "reimbursement", "prize"}:
+            continue
+        if fact.update_status not in {"confirmed", "resumed", "settled", "amended"}:
+            continue
+        if any(item.value > as_of and item.meaning in {"effective_date", "payment_date", "settlement_date", "completion_date"} for item in fact.dates):
+            return "confirmed_future_credit"
+    return "historical_only_no_confirmed_future_credit"
+
+
+def analysis_pattern_forecastable(pattern: Mapping[str, Any], events_by_id: Mapping[str, Any], evidence: list[tuple[Any, EvidenceFact]], as_of: date) -> bool:
+    events = [events_by_id[event_id] for event_id in pattern.get("source_event_ids", []) if event_id in events_by_id]
+    eligibility = income_eligibility(events, evidence, as_of)
+    return bool(pattern.get("forecastable")) or (eligibility == "confirmed_future_credit" and bool(events) and events[0].direction == "credit")
 
 
 def cadence(dates: list[date]) -> int | None:
@@ -391,8 +413,11 @@ def validate_proposals(raw: Mapping[str, Any], events: Mapping[str, Any], user_i
             if any(event.category != category for event in source_events):
                 raise AnalysisValidationError("pattern category contradicts a source event")
             if pattern_type in {"recurring_commitment", "variable_spending"}:
-                if any(event.direction != "debit" for event in source_events):
-                    raise AnalysisValidationError("spending patterns may only contain debit events")
+                directions = {event.direction for event in source_events}
+                if len(directions) != 1:
+                    raise AnalysisValidationError("a recurring pattern cannot mix debit and credit events")
+                if pattern_type == "variable_spending" and directions != {"debit"}:
+                    raise AnalysisValidationError("variable spending patterns may only contain debit events")
                 if any(event.status != "settled" for event in source_events):
                     raise AnalysisValidationError("historical pattern claims may only use settled observations")
             if pattern_type == "variable_spending" and category not in VARIABLE_CATEGORIES:
@@ -782,10 +807,6 @@ def build_financial_analysis(data: Any, user_id: str, as_of: date, request_id: s
     pending_obligations = [event for event in all_events if event.status in {"pending", "scheduled"} and event.direction == "debit" and event.settlement_date > as_of]
     future_obligations, confirmed_income = _future_commitments(all_events, as_of, as_of + timedelta(days=90), profile.home_currency, data.convert)
     events_by_id = {event.event_id: event for event in historical}
-    patterns = _deterministic_patterns(historical, profile.home_currency, data.convert)
-    rejected: list[dict[str, Any]] = []
-    if ai_validation is not None:
-        patterns, rejected = _apply_ai_proposals(patterns, ai_validation, events_by_id, profile.home_currency, data.convert)
     evidence = _scope_messages(data, user_id, request_id, as_of)
     source_evidence = []
     supported_changes = []
@@ -801,6 +822,10 @@ def build_financial_analysis(data: Any, user_id: str, as_of: date, request_id: s
             supported_changes.append({"source_id": message["message_id"], "status": fact.update_status, "transaction_type": fact.transaction_type, "source_event_id": fact.supplied_event_id})
         if fact.update_status in {"pending", "delayed", "disputed", "unknown"} or fact.ambiguities or fact.conflicts:
             unresolved.append({"source_id": message["message_id"], "reason": "unresolved evidence status or ambiguity", "update_status": fact.update_status, "ambiguities": list(fact.ambiguities), "conflicts": list(fact.conflicts)})
+    patterns = _deterministic_patterns(historical, profile.home_currency, data.convert)
+    rejected: list[dict[str, Any]] = []
+    if ai_validation is not None:
+        patterns, rejected = _apply_ai_proposals(patterns, ai_validation, events_by_id, profile.home_currency, data.convert)
     historical_by_category: dict[str, list[Any]] = defaultdict(list)
     for event in historical:
         historical_by_category[event.category].append(event)
@@ -866,9 +891,14 @@ def build_financial_analysis(data: Any, user_id: str, as_of: date, request_id: s
                 "cadence_kind": pattern["stats"]["cadence_kind"],
                 "amount_policy": "deterministic_recent_statistic_only",
                 "recent_median": pattern["stats"]["recent_median"],
-                "forecastable": pattern["forecastable"],
+                "income_eligibility": income_eligibility(
+                    [events_by_id[event_id] for event_id in pattern["source_event_ids"] if event_id in events_by_id],
+                    evidence,
+                    as_of,
+                ),
+                "forecastable": analysis_pattern_forecastable(pattern, events_by_id, evidence, as_of),
             }
-            for pattern in patterns if pattern["forecastable"]
+            for pattern in patterns if analysis_pattern_forecastable(pattern, events_by_id, evidence, as_of)
         ],
         "assumptions": [
             "Available balance is the supplied current snapshot and historical transactions are not replayed against it.",

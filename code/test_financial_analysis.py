@@ -117,6 +117,47 @@ class FinancialAnalysisTests(unittest.TestCase):
         self.assertEqual(len(validation.accepted), 1)
         self.assertEqual(len(validation.rejected), 2)
 
+    def test_recurring_salary_credit_is_a_valid_pattern(self):
+        events = {
+            "salary_1": event("salary_1", "user_a", date(2025, 1, 15), "Employer salary", "salary", "income", "credit"),
+            "salary_2": event("salary_2", "user_a", date(2025, 2, 15), "Employer salary", "salary", "income", "credit"),
+        }
+        proposal = {
+            "pattern_type": "recurring_commitment", "category": "salary", "label": "Employer salary",
+            "source_event_ids": ["salary_1", "salary_2"], "grouping_rationale": "same monthly employer credit",
+            "supporting_observations": [
+                {"source_event_id": "salary_1", "observation": "January salary"},
+                {"source_event_id": "salary_2", "observation": "February salary"},
+            ], "uncertainty": "future employment is not guaranteed", "alternative_interpretations": [],
+        }
+        validation = validate_proposals({"patterns": [proposal]}, events, "user_a")
+        self.assertEqual(len(validation.accepted), 1)
+        self.assertEqual(validation.rejected, ())
+
+    def test_confirmed_future_platform_credit_is_eligible_without_keyword_override(self):
+        events = [
+            event("event_991", "user_99", date(2025, 1, 1), "Driver platform payout", "platform_income", "income", "credit"),
+            event("event_992", "user_99", date(2025, 2, 1), "Driver platform payout", "platform_income", "income", "credit"),
+            event("event_993", "user_99", date(2025, 3, 1), "Driver platform payout", "platform_income", "income", "credit"),
+        ]
+        message = {"message_id": "message_998", "user_id": "user_99", "request_id": "request_99", "sent_at": "2025-03-10", "message_text": "The platform payout is confirmed for April 1."}
+        fact = EvidenceFact.from_mapping({
+            "source_id": "message_998", "source_kind": "message", "supplied_user_id": "user_99", "supplied_request_id": "request_99",
+            "supplied_event_id": "event_993", "transaction_type": "payout", "update_status": "confirmed", "action": "confirmation",
+            "amount": "10", "currency": "USD", "dates": [{"date": "2025-04-01", "meaning": "payment_date"}],
+            "recurrence_scope": "future_occurrences", "supporting_text": "The platform payout is confirmed for April 1.",
+            "missing_fields": [], "ambiguities": [], "conflicts": [],
+        })
+        data = SimpleNamespace(
+            profiles={"user_99": SimpleNamespace(home_currency="USD", balance=Decimal("100"), minimum=Decimal("10"), priorities=set(), protected=set(), reduce_categories=set(), stop_categories=set(), payment_methods=set(), max_installment_months=None)},
+            events_by_user={"user_99": events}, messages_by_user={"user_99": [message]}, evidence_facts={"message_998": fact},
+            convert=lambda amount, _src, _dst, _when: amount,
+        )
+        analysis = build_financial_analysis(data, "user_99", date(2025, 3, 15), "request_99")
+        eligible = next(item for item in analysis["forecast_inputs"] if item["category"] == "platform_income")
+        self.assertEqual(eligible["income_eligibility"], "confirmed_future_credit")
+        self.assertTrue(eligible["forecastable"])
+
     def test_duplicate_lifecycle_rows_do_not_create_historical_credit(self):
         data = Data()
         analysis = build_financial_analysis(data, "user_20", date(2026, 2, 7), "request_20")

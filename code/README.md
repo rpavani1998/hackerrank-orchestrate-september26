@@ -126,6 +126,19 @@ PYTHONDONTWRITEBYTECODE=1 python3 code/build_analysis_artifact.py
 This writes the development-only `evaluation/financial_analysis_all_requests.json`
 artifact (ignored because it contains the full 250-scope history expansion).
 
+Audit exact sample scope coverage, forecast consumption, source quality, and the
+intersection with the 250-request artifact with:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 code/audit_financial_analysis.py --strict
+```
+
+Strict mode exits nonzero when any required sample scope is absent. Normal
+runtime behavior is unchanged: a missing analysis scope still uses the
+corrected deterministic recurrence fallback. The audit also distinguishes live,
+cached, and deterministic analysis records; it does not infer coverage from
+artifact size.
+
 The focused smoke test remains available:
 
 ```bash

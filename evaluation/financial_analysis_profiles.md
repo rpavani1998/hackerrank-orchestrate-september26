@@ -50,104 +50,104 @@ Available balance snapshot: `60383889.20`; minimum balance: `29158400.00`.
 - Cadence: `monthly_calendar_like` (30 days); recent median: `2081730.85` IDR
 - Range: `1830311.06`–`2143659.02`; observed weekly buckets: `5`; monthly buckets: `5`
 - Uncertainty: Utility consumption varies seasonally, leading to changing monthly amounts.
-### ai_pattern_0006 — recurring_commitment: Shared storage plan
+### ai_pattern_0006 — recurring_commitment: Payroll credit
+- Category: `salary`; forecastable: `True`; source: `validated_ai`
+- Source events: `event_104, event_112, event_120, event_128, event_136`
+- Dates: `2025-03-15, 2025-04-15, 2025-05-15, 2025-06-15, 2025-07-15`
+- Cadence: `monthly_calendar_like` (30 days); recent median: `33345000.00` IDR
+- Range: `33345000.00`–`33345000.00`; observed weekly buckets: `5`; monthly buckets: `5`
+- Uncertainty: Future salary amounts are subject to employer adjustments.
+### ai_pattern_0007 — recurring_commitment: Shared storage plan
 - Category: `cloud_storage`; forecastable: `True`; source: `validated_ai`
 - Source events: `event_111, event_119, event_127, event_135, event_143`
 - Dates: `2025-03-13, 2025-04-13, 2025-05-13, 2025-06-13, 2025-07-13`
 - Cadence: `monthly_calendar_like` (30 days); recent median: `369550.00` IDR
 - Range: `369550.00`–`369550.00`; observed weekly buckets: `5`; monthly buckets: `5`
 - Uncertainty: Subscription can be cancelled at any time by the user.
-### ai_pattern_0007 — variable_spending: entertainment
+### ai_pattern_0008 — variable_spending: entertainment
 - Category: `entertainment`; forecastable: `True`; source: `validated_ai`
 - Source events: `event_110, event_118, event_126, event_134, event_142`
 - Dates: `2025-03-15, 2025-04-15, 2025-05-15, 2025-06-15, 2025-07-15`
 - Cadence: `monthly_calendar_like` (30 days); recent median: `1289187.40` IDR
 - Range: `1193699.10`–`1367779.89`; observed weekly buckets: `5`; monthly buckets: `5`
 - Uncertainty: Discretionary nature causes unpredictable month-to-month totals.
-### ai_pattern_0008 — variable_spending: groceries
+### ai_pattern_0009 — variable_spending: groceries
 - Category: `groceries`; forecastable: `True`; source: `validated_ai`
 - Source events: `event_145, event_146, event_147, event_148, event_149, event_150, event_151, event_152, event_153, event_154, event_155, event_156, event_157, event_158, event_159, event_160, event_161, event_162`
 - Dates: `2025-02-10, 2025-02-20, 2025-03-02, 2025-03-12, 2025-03-22, 2025-04-01, 2025-04-11, 2025-04-21, 2025-05-01, 2025-05-11, 2025-05-21, 2025-05-31, 2025-06-10, 2025-06-20, 2025-06-30, 2025-07-10, 2025-07-20, 2025-07-30`
 - Cadence: `fixed_day_cadence` (10 days); recent median: `2118766.78` IDR
 - Range: `1418745.34`–`2477697.53`; observed weekly buckets: `18`; monthly buckets: `6`
 - Uncertainty: Basket sizes and shopping frequency fluctuate based on household needs.
-### ai_pattern_0009 — variable_spending: transport
+### ai_pattern_0010 — variable_spending: transport
 - Category: `transport`; forecastable: `True`; source: `validated_ai`
 - Source events: `event_163, event_164, event_165, event_166, event_167, event_168, event_169, event_170, event_171, event_172, event_173, event_174, event_175`
 - Dates: `2025-02-11, 2025-02-25, 2025-03-11, 2025-03-25, 2025-04-08, 2025-04-22, 2025-05-06, 2025-05-20, 2025-06-03, 2025-06-17, 2025-07-01, 2025-07-15, 2025-07-29`
 - Cadence: `biweekly_fixed_day` (14 days); recent median: `1318747.50` IDR
 - Range: `995704.83`–`1440242.94`; observed weekly buckets: `13`; monthly buckets: `6`
 - Uncertainty: Travel requirements may vary depending on commuting habits.
-### ai_pattern_0010 — unsupported_recurring: Bakery and snacks
+### ai_pattern_0011 — unsupported_recurring: Bakery and snacks
 - Category: `dining`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_176`
 - Dates: `2025-02-12`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `1166644.88` IDR
 - Range: `1166644.88`–`1166644.88`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: Single instance provides insufficient data for recurrence validation.
-### ai_pattern_0011 — unsupported_recurring: Coffee shop
+### ai_pattern_0012 — unsupported_recurring: Coffee shop
 - Category: `dining`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_177`
 - Dates: `2025-03-05`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `1101709.76` IDR
 - Range: `1101709.76`–`1101709.76`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: Only a single occurrence is recorded.
-### ai_pattern_0012 — unsupported_recurring: Weekend food delivery
+### ai_pattern_0013 — unsupported_recurring: Weekend food delivery
 - Category: `dining`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_178`
 - Dates: `2025-03-26`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `935929.08` IDR
 - Range: `935929.08`–`935929.08`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: Lacks supporting follow-up events.
-### ai_pattern_0013 — unsupported_recurring: Quick-service meal
+### ai_pattern_0014 — unsupported_recurring: Quick-service meal
 - Category: `dining`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_179`
 - Dates: `2025-04-16`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `1271076.93` IDR
 - Range: `1271076.93`–`1271076.93`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: Insufficient occurrences to project recurrence.
-### ai_pattern_0014 — unsupported_recurring: Takeaway order
+### ai_pattern_0015 — unsupported_recurring: Takeaway order
 - Category: `dining`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_180`
 - Dates: `2025-05-07`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `971169.92` IDR
 - Range: `971169.92`–`971169.92`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: Single data point.
-### ai_pattern_0015 — unsupported_recurring: Neighbourhood restaurant
+### ai_pattern_0016 — unsupported_recurring: Neighbourhood restaurant
 - Category: `dining`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_181`
 - Dates: `2025-05-28`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `1111388.15` IDR
 - Range: `1111388.15`–`1111388.15`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: Cannot determine regularity from one event.
-### ai_pattern_0016 — unsupported_recurring: Bakery and snacks
+### ai_pattern_0017 — unsupported_recurring: Bakery and snacks
 - Category: `dining`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_182`
 - Dates: `2025-06-18`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `947892.35` IDR
 - Range: `947892.35`–`947892.35`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: No secondary matching events.
-### ai_pattern_0017 — unsupported_recurring: Family dinner
+### ai_pattern_0018 — unsupported_recurring: Family dinner
 - Category: `dining`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_183`
 - Dates: `2025-07-09`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `1043758.65` IDR
 - Range: `1043758.65`–`1043758.65`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: Single event record.
-### ai_pattern_0018 — unsupported_recurring: Bakery and snacks
+### ai_pattern_0019 — unsupported_recurring: Bakery and snacks
 - Category: `dining`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_184`
 - Dates: `2025-07-30`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `1204805.34` IDR
 - Range: `1204805.34`–`1204805.34`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: Lacks longitudinal data.
-### pattern_0006 — recurring_commitment: Payroll credit
-- Category: `salary`; forecastable: `True`; source: `deterministic`
-- Source events: `event_104, event_112, event_120, event_128, event_136`
-- Dates: `2025-03-15, 2025-04-15, 2025-05-15, 2025-06-15, 2025-07-15`
-- Cadence: `monthly_calendar_like` (30 days); recent median: `33345000.00` IDR
-- Range: `33345000.00`–`33345000.00`; observed weekly buckets: `5`; monthly buckets: `5`
-- Uncertainty: deterministic cadence is supported by at least three settled observations
 
 ## Known future commitments
 
@@ -156,7 +156,6 @@ Available balance snapshot: `60383889.20`; minimum balance: `29158400.00`.
 ## Evidence, changes, uncertainty, and assumptions
 
 - Supported change `message_01`: `salary/amended` event `none`
-- Review item: `['event_104', 'event_112', 'event_120', 'event_128', 'event_136']` — spending patterns may only contain debit events
 - Review item: `['event_185']` — pattern contains an unknown source event ID
 - Assumption: Available balance is the supplied current snapshot and historical transactions are not replayed against it.
 - Assumption: Only settled historical events are used for historical statistics.
@@ -341,34 +340,34 @@ Available balance snapshot: `46475.10`; minimum balance: `13100.00`.
 - Cadence: `monthly_calendar_like` (30 days); recent median: `706.37` ZAR
 - Range: `604.15`–`750.89`; observed weekly buckets: `5`; monthly buckets: `5`
 - Uncertainty: Consumption levels vary seasonally.
-### ai_pattern_0006 — recurring_commitment: Cloud storage plan
+### ai_pattern_0006 — recurring_commitment: Payroll credit
+- Category: `salary`; forecastable: `True`; source: `validated_ai`
+- Source events: `event_358, event_366, event_374, event_382`
+- Dates: `2025-06-15, 2025-07-15, 2025-08-15, 2025-09-15`
+- Cadence: `monthly_calendar_like` (31 days); recent median: `14740.00` ZAR
+- Range: `14740.00`–`14740.00`; observed weekly buckets: `4`; monthly buckets: `4`
+- Uncertainty: Employment status changed as indicated by the final payroll event later.
+### ai_pattern_0007 — recurring_commitment: Cloud storage plan
 - Category: `cloud_storage`; forecastable: `True`; source: `validated_ai`
 - Source events: `event_364, event_372, event_380, event_388, event_396`
 - Dates: `2025-06-12, 2025-07-12, 2025-08-12, 2025-09-12, 2025-10-12`
 - Cadence: `monthly_calendar_like` (30 days); recent median: `113.30` ZAR
 - Range: `113.30`–`113.30`; observed weekly buckets: `5`; monthly buckets: `5`
 - Uncertainty: Subscription can be cancelled at any time.
-### ai_pattern_0007 — variable_spending: shopping
+### ai_pattern_0008 — variable_spending: shopping
 - Category: `shopping`; forecastable: `True`; source: `validated_ai`
 - Source events: `event_365, event_373, event_381, event_389, event_397`
 - Dates: `2025-06-12, 2025-07-12, 2025-08-12, 2025-09-12, 2025-10-12`
 - Cadence: `monthly_calendar_like` (30 days); recent median: `404.24` ZAR
 - Range: `362.09`–`422.67`; observed weekly buckets: `5`; monthly buckets: `5`
 - Uncertainty: Discretionary amounts vary by month.
-### ai_pattern_0008 — unsupported_recurring: Final employer payroll
+### ai_pattern_0009 — unsupported_recurring: Final employer payroll
 - Category: `salary`; forecastable: `False`; source: `validated_ai`
 - Source events: `event_390`
 - Dates: `2025-10-15`
 - Cadence: `insufficient_or_irregular_history` (None days); recent median: `14740.00` ZAR
 - Range: `14740.00`–`14740.00`; observed weekly buckets: `1`; monthly buckets: `1`
 - Uncertainty: Indicates a final payment, meaning future occurrence is unsupported.
-### pattern_0006 — recurring_commitment: Payroll credit
-- Category: `salary`; forecastable: `True`; source: `deterministic`
-- Source events: `event_358, event_366, event_374, event_382`
-- Dates: `2025-06-15, 2025-07-15, 2025-08-15, 2025-09-15`
-- Cadence: `monthly_calendar_like` (31 days); recent median: `14740.00` ZAR
-- Range: `14740.00`–`14740.00`; observed weekly buckets: `4`; monthly buckets: `4`
-- Uncertainty: deterministic cadence is supported by at least three settled observations
 ### pattern_0008 — variable_spending: groceries
 - Category: `groceries`; forecastable: `True`; source: `deterministic`
 - Source events: `event_399, event_400, event_401, event_402, event_403, event_404, event_405, event_406, event_407, event_408, event_409, event_410, event_411, event_412, event_413, event_414, event_415, event_416, event_417, event_418, event_419, event_420, event_421, event_422, event_423, event_424`
@@ -389,7 +388,6 @@ Available balance snapshot: `46475.10`; minimum balance: `13100.00`.
 
 ## Evidence, changes, uncertainty, and assumptions
 
-- Review item: `['event_358', 'event_366', 'event_374', 'event_382']` — spending patterns may only contain debit events
 - Assumption: Available balance is the supplied current snapshot and historical transactions are not replayed against it.
 - Assumption: Only settled historical events are used for historical statistics.
 - Assumption: Pending credits, bonuses, commissions, refunds, prizes, and investment gains are not confirmed future income.

@@ -14,6 +14,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "debt_repayment",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Education loan instalment",
           "pattern_id": "ai_pattern_0001",
           "pattern_type": "recurring_commitment",
@@ -32,6 +33,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "education",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Professional training fee",
           "pattern_id": "ai_pattern_0002",
           "pattern_type": "recurring_commitment",
@@ -50,6 +52,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "rent",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Apartment rent transfer",
           "pattern_id": "ai_pattern_0003",
           "pattern_type": "recurring_commitment",
@@ -69,6 +72,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "utilities",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Household utility payment",
           "pattern_id": "ai_pattern_0004",
           "pattern_type": "recurring_commitment",
@@ -87,6 +91,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "delivery_membership",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Delivery service plan",
           "pattern_id": "ai_pattern_0005",
           "pattern_type": "recurring_commitment",
@@ -105,6 +110,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "music_subscription",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Music service subscription",
           "pattern_id": "ai_pattern_0006",
           "pattern_type": "recurring_commitment",
@@ -123,6 +129,7 @@
           "cadence_kind": "biweekly_fixed_day",
           "category": "dining",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "dining",
           "pattern_id": "ai_pattern_0007",
           "pattern_type": "variable_spending",
@@ -141,6 +148,7 @@
           "cadence_kind": "weekly_fixed_day",
           "category": "groceries",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "groceries",
           "pattern_id": "ai_pattern_0008",
           "pattern_type": "variable_spending",
@@ -159,6 +167,7 @@
           "cadence_kind": "weekly_fixed_day",
           "category": "transport",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "transport",
           "pattern_id": "ai_pattern_0009",
           "pattern_type": "variable_spending",
@@ -1546,14 +1555,14 @@
       },
       "model_metadata": {
         "accepted_patterns": 13,
-        "cache_hit": false,
+        "cache_hit": true,
         "estimated_cost_usd": null,
-        "input_tokens": 14936,
+        "input_tokens": null,
         "mode": "ai",
         "model": "google/gemini-3.5-flash-lite",
-        "output_tokens": 3871,
+        "output_tokens": null,
         "rejected_patterns": 0,
-        "reported_cost_usd": "0.0141583",
+        "reported_cost_usd": null,
         "retries": 0
       },
       "observed_historical_facts": {
@@ -2491,6 +2500,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "education",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Course tuition",
           "pattern_id": "ai_pattern_0001",
           "pattern_type": "recurring_commitment",
@@ -2509,6 +2519,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "healthcare",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Clinic payment",
           "pattern_id": "ai_pattern_0002",
           "pattern_type": "recurring_commitment",
@@ -2527,6 +2538,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "housing",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Home repair reserve",
           "pattern_id": "ai_pattern_0003",
           "pattern_type": "recurring_commitment",
@@ -2546,6 +2558,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "insurance",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Household insurance",
           "pattern_id": "ai_pattern_0004",
           "pattern_type": "recurring_commitment",
@@ -2564,6 +2577,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "utilities",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Municipal utilities",
           "pattern_id": "ai_pattern_0005",
           "pattern_type": "recurring_commitment",
@@ -2580,10 +2594,30 @@
           "amount_policy": "deterministic_recent_statistic_only",
           "cadence_days": 30,
           "cadence_kind": "monthly_calendar_like",
+          "category": "salary",
+          "forecastable": true,
+          "income_eligibility": "recurring_salary_supported",
+          "label": "Payroll credit",
+          "pattern_id": "ai_pattern_0006",
+          "pattern_type": "recurring_commitment",
+          "recent_median": "33345000.00",
+          "source_event_ids": [
+            "event_104",
+            "event_112",
+            "event_120",
+            "event_128",
+            "event_136"
+          ]
+        },
+        {
+          "amount_policy": "deterministic_recent_statistic_only",
+          "cadence_days": 30,
+          "cadence_kind": "monthly_calendar_like",
           "category": "cloud_storage",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Shared storage plan",
-          "pattern_id": "ai_pattern_0006",
+          "pattern_id": "ai_pattern_0007",
           "pattern_type": "recurring_commitment",
           "recent_median": "369550.00",
           "source_event_ids": [
@@ -2600,8 +2634,9 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "entertainment",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "entertainment",
-          "pattern_id": "ai_pattern_0007",
+          "pattern_id": "ai_pattern_0008",
           "pattern_type": "variable_spending",
           "recent_median": "1289187.40",
           "source_event_ids": [
@@ -2618,8 +2653,9 @@
           "cadence_kind": "fixed_day_cadence",
           "category": "groceries",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "groceries",
-          "pattern_id": "ai_pattern_0008",
+          "pattern_id": "ai_pattern_0009",
           "pattern_type": "variable_spending",
           "recent_median": "2118766.78",
           "source_event_ids": [
@@ -2649,8 +2685,9 @@
           "cadence_kind": "biweekly_fixed_day",
           "category": "transport",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "transport",
-          "pattern_id": "ai_pattern_0009",
+          "pattern_id": "ai_pattern_0010",
           "pattern_type": "variable_spending",
           "recent_median": "1318747.50",
           "source_event_ids": [
@@ -2667,24 +2704,6 @@
             "event_173",
             "event_174",
             "event_175"
-          ]
-        },
-        {
-          "amount_policy": "deterministic_recent_statistic_only",
-          "cadence_days": 30,
-          "cadence_kind": "monthly_calendar_like",
-          "category": "salary",
-          "forecastable": true,
-          "label": "Payroll credit",
-          "pattern_id": "pattern_0006",
-          "pattern_type": "recurring_commitment",
-          "recent_median": "33345000.00",
-          "source_event_ids": [
-            "event_104",
-            "event_112",
-            "event_120",
-            "event_128",
-            "event_136"
           ]
         }
       ],
@@ -3378,6 +3397,107 @@
         },
         {
           "alternatives": [
+            "Could change due to promotions, bonuses, or contractual modifications."
+          ],
+          "category": "salary",
+          "forecastable": true,
+          "grouping_rationale": "Consistent monthly salary credits on the 15th of each month.",
+          "grouping_source": "validated_ai",
+          "label": "Payroll credit",
+          "pattern_id": "ai_pattern_0006",
+          "pattern_type": "recurring_commitment",
+          "source_event_ids": [
+            "event_104",
+            "event_112",
+            "event_120",
+            "event_128",
+            "event_136"
+          ],
+          "source_ids": [
+            "event_104",
+            "event_112",
+            "event_120",
+            "event_128",
+            "event_136"
+          ],
+          "stats": {
+            "amount_variability_stddev": "0.00",
+            "cadence_days": 30,
+            "cadence_kind": "monthly_calendar_like",
+            "coverage_days": 123,
+            "coverage_end": "2025-07-15",
+            "coverage_start": "2025-03-15",
+            "currency": "IDR",
+            "historical_maximum": "33345000.00",
+            "historical_minimum": "33345000.00",
+            "historical_range": "0.00",
+            "interval_days": [
+              31,
+              30,
+              31,
+              30
+            ],
+            "missing_buckets_are_not_zero": true,
+            "monthly_totals_observed": {
+              "2025-03": "33345000.00",
+              "2025-04": "33345000.00",
+              "2025-05": "33345000.00",
+              "2025-06": "33345000.00",
+              "2025-07": "33345000.00"
+            },
+            "observation_count": 5,
+            "observed_month_count": 5,
+            "observed_week_count": 5,
+            "occurrence_dates": [
+              "2025-03-15",
+              "2025-04-15",
+              "2025-05-15",
+              "2025-06-15",
+              "2025-07-15"
+            ],
+            "recent_amounts": [
+              "33345000.00",
+              "33345000.00",
+              "33345000.00",
+              "33345000.00",
+              "33345000.00"
+            ],
+            "recent_median": "33345000.00",
+            "sparse_history": false,
+            "weekly_totals_observed": {
+              "2025-03-10": "33345000.00",
+              "2025-04-14": "33345000.00",
+              "2025-05-12": "33345000.00",
+              "2025-06-09": "33345000.00",
+              "2025-07-14": "33345000.00"
+            }
+          },
+          "supporting_observations": [
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-03-15",
+              "source_event_id": "event_104"
+            },
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-04-15",
+              "source_event_id": "event_112"
+            },
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-05-15",
+              "source_event_id": "event_120"
+            },
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-06-15",
+              "source_event_id": "event_128"
+            },
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-07-15",
+              "source_event_id": "event_136"
+            }
+          ],
+          "uncertainty": "Future salary amounts are subject to employer adjustments."
+        },
+        {
+          "alternatives": [
             "May be treated as a discretionary subscription rather than a mandatory recurring commitment."
           ],
           "category": "cloud_storage",
@@ -3385,7 +3505,7 @@
           "grouping_rationale": "Monthly recurring subscription payments for cloud storage on the 13th of each month.",
           "grouping_source": "validated_ai",
           "label": "Shared storage plan",
-          "pattern_id": "ai_pattern_0006",
+          "pattern_id": "ai_pattern_0007",
           "pattern_type": "recurring_commitment",
           "source_event_ids": [
             "event_111",
@@ -3486,7 +3606,7 @@
           "grouping_rationale": "Recurring monthly expenditure grouped under entertainment with fluctuating amounts.",
           "grouping_source": "validated_ai",
           "label": "entertainment",
-          "pattern_id": "ai_pattern_0007",
+          "pattern_id": "ai_pattern_0008",
           "pattern_type": "variable_spending",
           "source_event_ids": [
             "event_110",
@@ -3587,7 +3707,7 @@
           "grouping_rationale": "Frequent variable expenditure transactions related to grocery purchases and pantry shopping.",
           "grouping_source": "validated_ai",
           "label": "groceries",
-          "pattern_id": "ai_pattern_0008",
+          "pattern_id": "ai_pattern_0009",
           "pattern_type": "variable_spending",
           "source_event_ids": [
             "event_145",
@@ -3757,7 +3877,7 @@
           "grouping_rationale": "Regularly occurring transport-related expenses including fuel, rail passes, and commuter fares.",
           "grouping_source": "validated_ai",
           "label": "transport",
-          "pattern_id": "ai_pattern_0009",
+          "pattern_id": "ai_pattern_0010",
           "pattern_type": "variable_spending",
           "source_event_ids": [
             "event_163",
@@ -3902,7 +4022,7 @@
           "grouping_rationale": "Candidate lacks sufficient repetition to form a confirmed recurring pattern.",
           "grouping_source": "validated_ai",
           "label": "Bakery and snacks",
-          "pattern_id": "ai_pattern_0010",
+          "pattern_id": "ai_pattern_0011",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_176"
@@ -3958,7 +4078,7 @@
           "grouping_rationale": "Candidate lacks sufficient historical occurrences to confirm a recurring schedule.",
           "grouping_source": "validated_ai",
           "label": "Coffee shop",
-          "pattern_id": "ai_pattern_0011",
+          "pattern_id": "ai_pattern_0012",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_177"
@@ -4014,7 +4134,7 @@
           "grouping_rationale": "Single transaction without enough historical instances to establish a pattern.",
           "grouping_source": "validated_ai",
           "label": "Weekend food delivery",
-          "pattern_id": "ai_pattern_0012",
+          "pattern_id": "ai_pattern_0013",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_178"
@@ -4070,7 +4190,7 @@
           "grouping_rationale": "Standalone dining transaction with no established cadence.",
           "grouping_source": "validated_ai",
           "label": "Quick-service meal",
-          "pattern_id": "ai_pattern_0013",
+          "pattern_id": "ai_pattern_0014",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_179"
@@ -4126,7 +4246,7 @@
           "grouping_rationale": "Candidate lacks the necessary observations for pattern classification.",
           "grouping_source": "validated_ai",
           "label": "Takeaway order",
-          "pattern_id": "ai_pattern_0014",
+          "pattern_id": "ai_pattern_0015",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_180"
@@ -4182,7 +4302,7 @@
           "grouping_rationale": "Single dining record without historical reinforcement.",
           "grouping_source": "validated_ai",
           "label": "Neighbourhood restaurant",
-          "pattern_id": "ai_pattern_0015",
+          "pattern_id": "ai_pattern_0016",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_181"
@@ -4238,7 +4358,7 @@
           "grouping_rationale": "Isolated snack purchase lacking recurrence evidence.",
           "grouping_source": "validated_ai",
           "label": "Bakery and snacks",
-          "pattern_id": "ai_pattern_0016",
+          "pattern_id": "ai_pattern_0017",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_182"
@@ -4294,7 +4414,7 @@
           "grouping_rationale": "Single occurrence of family dinner without pattern support.",
           "grouping_source": "validated_ai",
           "label": "Family dinner",
-          "pattern_id": "ai_pattern_0017",
+          "pattern_id": "ai_pattern_0018",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_183"
@@ -4350,7 +4470,7 @@
           "grouping_rationale": "Standalone snack purchase with no recurring cadence.",
           "grouping_source": "validated_ai",
           "label": "Bakery and snacks",
-          "pattern_id": "ai_pattern_0018",
+          "pattern_id": "ai_pattern_0019",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_184"
@@ -4396,82 +4516,6 @@
             }
           ],
           "uncertainty": "Lacks longitudinal data."
-        },
-        {
-          "alternatives": [],
-          "category": "salary",
-          "forecastable": true,
-          "grouping_source": "deterministic",
-          "label": "Payroll credit",
-          "pattern_id": "pattern_0006",
-          "pattern_type": "recurring_commitment",
-          "source_event_ids": [
-            "event_104",
-            "event_112",
-            "event_120",
-            "event_128",
-            "event_136"
-          ],
-          "source_ids": [
-            "event_104",
-            "event_112",
-            "event_120",
-            "event_128",
-            "event_136"
-          ],
-          "stats": {
-            "amount_variability_stddev": "0.00",
-            "cadence_days": 30,
-            "cadence_kind": "monthly_calendar_like",
-            "coverage_days": 123,
-            "coverage_end": "2025-07-15",
-            "coverage_start": "2025-03-15",
-            "currency": "IDR",
-            "historical_maximum": "33345000.00",
-            "historical_minimum": "33345000.00",
-            "historical_range": "0.00",
-            "interval_days": [
-              31,
-              30,
-              31,
-              30
-            ],
-            "missing_buckets_are_not_zero": true,
-            "monthly_totals_observed": {
-              "2025-03": "33345000.00",
-              "2025-04": "33345000.00",
-              "2025-05": "33345000.00",
-              "2025-06": "33345000.00",
-              "2025-07": "33345000.00"
-            },
-            "observation_count": 5,
-            "observed_month_count": 5,
-            "observed_week_count": 5,
-            "occurrence_dates": [
-              "2025-03-15",
-              "2025-04-15",
-              "2025-05-15",
-              "2025-06-15",
-              "2025-07-15"
-            ],
-            "recent_amounts": [
-              "33345000.00",
-              "33345000.00",
-              "33345000.00",
-              "33345000.00",
-              "33345000.00"
-            ],
-            "recent_median": "33345000.00",
-            "sparse_history": false,
-            "weekly_totals_observed": {
-              "2025-03-10": "33345000.00",
-              "2025-04-14": "33345000.00",
-              "2025-05-12": "33345000.00",
-              "2025-06-09": "33345000.00",
-              "2025-07-14": "33345000.00"
-            }
-          },
-          "uncertainty": "deterministic cadence is supported by at least three settled observations"
         }
       ],
       "known_future_commitments": {
@@ -4498,15 +4542,15 @@
         ]
       },
       "model_metadata": {
-        "accepted_patterns": 18,
-        "cache_hit": false,
+        "accepted_patterns": 19,
+        "cache_hit": true,
         "estimated_cost_usd": null,
-        "input_tokens": 18702,
+        "input_tokens": null,
         "mode": "ai",
         "model": "google/gemini-3.5-flash-lite",
-        "output_tokens": 5677,
-        "rejected_patterns": 2,
-        "reported_cost_usd": "0.0198031",
+        "output_tokens": null,
+        "rejected_patterns": 1,
+        "reported_cost_usd": null,
         "retries": 0
       },
       "observed_historical_facts": {
@@ -5389,49 +5433,6 @@
       ],
       "unresolved_evidence_and_assumptions": [
         {
-          "index": 5,
-          "proposal": {
-            "alternative_interpretations": [
-              "Could change due to promotions, bonuses, or contractual modifications."
-            ],
-            "category": "salary",
-            "grouping_rationale": "Consistent monthly salary credits on the 15th of each month.",
-            "label": "Payroll credit",
-            "pattern_type": "recurring_commitment",
-            "source_event_ids": [
-              "event_104",
-              "event_112",
-              "event_120",
-              "event_128",
-              "event_136"
-            ],
-            "supporting_observations": [
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-03-15",
-                "source_event_id": "event_104"
-              },
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-04-15",
-                "source_event_id": "event_112"
-              },
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-05-15",
-                "source_event_id": "event_120"
-              },
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-06-15",
-                "source_event_id": "event_128"
-              },
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-07-15",
-                "source_event_id": "event_136"
-              }
-            ],
-            "uncertainty": "Future salary amounts are subject to employer adjustments."
-          },
-          "reason": "spending patterns may only contain debit events"
-        },
-        {
           "index": 19,
           "proposal": {
             "alternative_interpretations": [
@@ -5470,6 +5471,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "debt_repayment",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Vehicle loan payment",
           "pattern_id": "ai_pattern_0001",
           "pattern_type": "recurring_commitment",
@@ -5488,6 +5490,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "family_support",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Dependent care payment",
           "pattern_id": "ai_pattern_0002",
           "pattern_type": "recurring_commitment",
@@ -5506,6 +5509,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "healthcare",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Therapy appointment",
           "pattern_id": "ai_pattern_0003",
           "pattern_type": "recurring_commitment",
@@ -5524,6 +5528,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "rent",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Apartment rent transfer",
           "pattern_id": "ai_pattern_0004",
           "pattern_type": "recurring_commitment",
@@ -5543,6 +5548,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "utilities",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Municipal utilities",
           "pattern_id": "ai_pattern_0005",
           "pattern_type": "recurring_commitment",
@@ -5557,12 +5563,31 @@
         },
         {
           "amount_policy": "deterministic_recent_statistic_only",
+          "cadence_days": 31,
+          "cadence_kind": "monthly_calendar_like",
+          "category": "salary",
+          "forecastable": true,
+          "income_eligibility": "recurring_salary_supported",
+          "label": "Payroll credit",
+          "pattern_id": "ai_pattern_0006",
+          "pattern_type": "recurring_commitment",
+          "recent_median": "14740.00",
+          "source_event_ids": [
+            "event_358",
+            "event_366",
+            "event_374",
+            "event_382"
+          ]
+        },
+        {
+          "amount_policy": "deterministic_recent_statistic_only",
           "cadence_days": 30,
           "cadence_kind": "monthly_calendar_like",
           "category": "cloud_storage",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Cloud storage plan",
-          "pattern_id": "ai_pattern_0006",
+          "pattern_id": "ai_pattern_0007",
           "pattern_type": "recurring_commitment",
           "recent_median": "113.30",
           "source_event_ids": [
@@ -5579,8 +5604,9 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "shopping",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "shopping",
-          "pattern_id": "ai_pattern_0007",
+          "pattern_id": "ai_pattern_0008",
           "pattern_type": "variable_spending",
           "recent_median": "404.24",
           "source_event_ids": [
@@ -5593,27 +5619,11 @@
         },
         {
           "amount_policy": "deterministic_recent_statistic_only",
-          "cadence_days": 31,
-          "cadence_kind": "monthly_calendar_like",
-          "category": "salary",
-          "forecastable": true,
-          "label": "Payroll credit",
-          "pattern_id": "pattern_0006",
-          "pattern_type": "recurring_commitment",
-          "recent_median": "14740.00",
-          "source_event_ids": [
-            "event_358",
-            "event_366",
-            "event_374",
-            "event_382"
-          ]
-        },
-        {
-          "amount_policy": "deterministic_recent_statistic_only",
           "cadence_days": 7,
           "cadence_kind": "weekly_fixed_day",
           "category": "groceries",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "groceries",
           "pattern_id": "pattern_0008",
           "pattern_type": "variable_spending",
@@ -5653,6 +5663,7 @@
           "cadence_kind": "biweekly_fixed_day",
           "category": "transport",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "transport",
           "pattern_id": "pattern_0010",
           "pattern_type": "variable_spending",
@@ -6362,6 +6373,96 @@
         },
         {
           "alternatives": [
+            "Could be subject to employer adjustments or termination."
+          ],
+          "category": "salary",
+          "forecastable": true,
+          "grouping_rationale": "Regular monthly salary income credits.",
+          "grouping_source": "validated_ai",
+          "label": "Payroll credit",
+          "pattern_id": "ai_pattern_0006",
+          "pattern_type": "recurring_commitment",
+          "source_event_ids": [
+            "event_358",
+            "event_366",
+            "event_374",
+            "event_382"
+          ],
+          "source_ids": [
+            "event_358",
+            "event_366",
+            "event_374",
+            "event_382"
+          ],
+          "stats": {
+            "amount_variability_stddev": "0.00",
+            "cadence_days": 31,
+            "cadence_kind": "monthly_calendar_like",
+            "coverage_days": 93,
+            "coverage_end": "2025-09-15",
+            "coverage_start": "2025-06-15",
+            "currency": "ZAR",
+            "historical_maximum": "14740.00",
+            "historical_minimum": "14740.00",
+            "historical_range": "0.00",
+            "interval_days": [
+              30,
+              31,
+              31
+            ],
+            "missing_buckets_are_not_zero": true,
+            "monthly_totals_observed": {
+              "2025-06": "14740.00",
+              "2025-07": "14740.00",
+              "2025-08": "14740.00",
+              "2025-09": "14740.00"
+            },
+            "observation_count": 4,
+            "observed_month_count": 4,
+            "observed_week_count": 4,
+            "occurrence_dates": [
+              "2025-06-15",
+              "2025-07-15",
+              "2025-08-15",
+              "2025-09-15"
+            ],
+            "recent_amounts": [
+              "14740.00",
+              "14740.00",
+              "14740.00",
+              "14740.00"
+            ],
+            "recent_median": "14740.00",
+            "sparse_history": false,
+            "weekly_totals_observed": {
+              "2025-06-09": "14740.00",
+              "2025-07-14": "14740.00",
+              "2025-08-11": "14740.00",
+              "2025-09-15": "14740.00"
+            }
+          },
+          "supporting_observations": [
+            {
+              "observation": "Payroll credit of 14740.00 ZAR on 2025-06-15",
+              "source_event_id": "event_358"
+            },
+            {
+              "observation": "Payroll credit of 14740.00 ZAR on 2025-07-15",
+              "source_event_id": "event_366"
+            },
+            {
+              "observation": "Payroll credit of 14740.00 ZAR on 2025-08-15",
+              "source_event_id": "event_374"
+            },
+            {
+              "observation": "Payroll credit of 14740.00 ZAR on 2025-09-15",
+              "source_event_id": "event_382"
+            }
+          ],
+          "uncertainty": "Employment status changed as indicated by the final payroll event later."
+        },
+        {
+          "alternatives": [
             "Pricing tier modifications by provider could alter future costs."
           ],
           "category": "cloud_storage",
@@ -6369,7 +6470,7 @@
           "grouping_rationale": "Monthly subscription charges for cloud storage.",
           "grouping_source": "validated_ai",
           "label": "Cloud storage plan",
-          "pattern_id": "ai_pattern_0006",
+          "pattern_id": "ai_pattern_0007",
           "pattern_type": "recurring_commitment",
           "source_event_ids": [
             "event_364",
@@ -6470,7 +6571,7 @@
           "grouping_rationale": "Periodic personal shopping expenses.",
           "grouping_source": "validated_ai",
           "label": "shopping",
-          "pattern_id": "ai_pattern_0007",
+          "pattern_id": "ai_pattern_0008",
           "pattern_type": "variable_spending",
           "source_event_ids": [
             "event_365",
@@ -6571,7 +6672,7 @@
           "grouping_rationale": "Single instance of final employer payroll lacking sufficient recurring historical instances under this specific description.",
           "grouping_source": "validated_ai",
           "label": "Final employer payroll",
-          "pattern_id": "ai_pattern_0008",
+          "pattern_id": "ai_pattern_0009",
           "pattern_type": "unsupported_recurring",
           "source_event_ids": [
             "event_390"
@@ -6617,75 +6718,6 @@
             }
           ],
           "uncertainty": "Indicates a final payment, meaning future occurrence is unsupported."
-        },
-        {
-          "alternatives": [],
-          "category": "salary",
-          "forecastable": true,
-          "grouping_source": "deterministic",
-          "label": "Payroll credit",
-          "pattern_id": "pattern_0006",
-          "pattern_type": "recurring_commitment",
-          "source_event_ids": [
-            "event_358",
-            "event_366",
-            "event_374",
-            "event_382"
-          ],
-          "source_ids": [
-            "event_358",
-            "event_366",
-            "event_374",
-            "event_382"
-          ],
-          "stats": {
-            "amount_variability_stddev": "0.00",
-            "cadence_days": 31,
-            "cadence_kind": "monthly_calendar_like",
-            "coverage_days": 93,
-            "coverage_end": "2025-09-15",
-            "coverage_start": "2025-06-15",
-            "currency": "ZAR",
-            "historical_maximum": "14740.00",
-            "historical_minimum": "14740.00",
-            "historical_range": "0.00",
-            "interval_days": [
-              30,
-              31,
-              31
-            ],
-            "missing_buckets_are_not_zero": true,
-            "monthly_totals_observed": {
-              "2025-06": "14740.00",
-              "2025-07": "14740.00",
-              "2025-08": "14740.00",
-              "2025-09": "14740.00"
-            },
-            "observation_count": 4,
-            "observed_month_count": 4,
-            "observed_week_count": 4,
-            "occurrence_dates": [
-              "2025-06-15",
-              "2025-07-15",
-              "2025-08-15",
-              "2025-09-15"
-            ],
-            "recent_amounts": [
-              "14740.00",
-              "14740.00",
-              "14740.00",
-              "14740.00"
-            ],
-            "recent_median": "14740.00",
-            "sparse_history": false,
-            "weekly_totals_observed": {
-              "2025-06-09": "14740.00",
-              "2025-07-14": "14740.00",
-              "2025-08-11": "14740.00",
-              "2025-09-15": "14740.00"
-            }
-          },
-          "uncertainty": "deterministic cadence is supported by at least three settled observations"
         },
         {
           "alternatives": [],
@@ -7000,15 +7032,15 @@
         "pending_or_scheduled_obligations": []
       },
       "model_metadata": {
-        "accepted_patterns": 8,
-        "cache_hit": false,
+        "accepted_patterns": 9,
+        "cache_hit": true,
         "estimated_cost_usd": null,
-        "input_tokens": 14281,
+        "input_tokens": null,
         "mode": "ai",
         "model": "google/gemini-3.5-flash-lite",
-        "output_tokens": 3145,
-        "rejected_patterns": 1,
-        "reported_cost_usd": "0.0121468",
+        "output_tokens": null,
+        "rejected_patterns": 0,
+        "reported_cost_usd": null,
         "retries": 0
       },
       "observed_historical_facts": {
@@ -7818,46 +7850,7 @@
         ]
       },
       "supported_changes": [],
-      "unresolved_evidence_and_assumptions": [
-        {
-          "index": 5,
-          "proposal": {
-            "alternative_interpretations": [
-              "Could be subject to employer adjustments or termination."
-            ],
-            "category": "salary",
-            "grouping_rationale": "Regular monthly salary income credits.",
-            "label": "Payroll credit",
-            "pattern_type": "recurring_commitment",
-            "source_event_ids": [
-              "event_358",
-              "event_366",
-              "event_374",
-              "event_382"
-            ],
-            "supporting_observations": [
-              {
-                "observation": "Payroll credit of 14740.00 ZAR on 2025-06-15",
-                "source_event_id": "event_358"
-              },
-              {
-                "observation": "Payroll credit of 14740.00 ZAR on 2025-07-15",
-                "source_event_id": "event_366"
-              },
-              {
-                "observation": "Payroll credit of 14740.00 ZAR on 2025-08-15",
-                "source_event_id": "event_374"
-              },
-              {
-                "observation": "Payroll credit of 14740.00 ZAR on 2025-09-15",
-                "source_event_id": "event_382"
-              }
-            ],
-            "uncertainty": "Employment status changed as indicated by the final payroll event later."
-          },
-          "reason": "spending patterns may only contain debit events"
-        }
-      ]
+      "unresolved_evidence_and_assumptions": []
     },
     "user_20|2026-02-07": {
       "assumptions": [
@@ -7873,6 +7866,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "education",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "School fee payment",
           "pattern_id": "pattern_0001",
           "pattern_type": "recurring_commitment",
@@ -7891,6 +7885,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "healthcare",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Family healthcare expense",
           "pattern_id": "pattern_0002",
           "pattern_type": "recurring_commitment",
@@ -7909,6 +7904,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "housing",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Home association fee",
           "pattern_id": "pattern_0003",
           "pattern_type": "recurring_commitment",
@@ -7928,6 +7924,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "insurance",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Household insurance",
           "pattern_id": "pattern_0004",
           "pattern_type": "recurring_commitment",
@@ -7947,6 +7944,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "utilities",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Municipal utilities",
           "pattern_id": "pattern_0005",
           "pattern_type": "recurring_commitment",
@@ -7966,6 +7964,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "salary",
           "forecastable": true,
+          "income_eligibility": "recurring_salary_supported",
           "label": "Payroll credit",
           "pattern_id": "pattern_0006",
           "pattern_type": "recurring_commitment",
@@ -7984,6 +7983,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "cloud_storage",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "Shared storage plan",
           "pattern_id": "pattern_0007",
           "pattern_type": "recurring_commitment",
@@ -8002,6 +8002,7 @@
           "cadence_kind": "monthly_calendar_like",
           "category": "entertainment",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "entertainment",
           "pattern_id": "pattern_0008",
           "pattern_type": "variable_spending",
@@ -8020,6 +8021,7 @@
           "cadence_kind": "fixed_day_cadence",
           "category": "groceries",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "groceries",
           "pattern_id": "pattern_0009",
           "pattern_type": "variable_spending",
@@ -8051,6 +8053,7 @@
           "cadence_kind": "biweekly_fixed_day",
           "category": "transport",
           "forecastable": true,
+          "income_eligibility": "not_income",
           "label": "transport",
           "pattern_id": "pattern_0010",
           "pattern_type": "variable_spending",
@@ -9684,14 +9687,14 @@
       },
       "model_metadata": {
         "accepted_patterns": 1,
-        "cache_hit": false,
+        "cache_hit": true,
         "estimated_cost_usd": null,
-        "input_tokens": 18985,
+        "input_tokens": null,
         "mode": "ai",
         "model": "google/gemini-3.5-flash-lite",
-        "output_tokens": 620,
+        "output_tokens": null,
         "rejected_patterns": 3,
-        "reported_cost_usd": "0.0072455",
+        "reported_cost_usd": null,
         "retries": 0
       },
       "observed_historical_facts": {
@@ -10692,7 +10695,7 @@
       ]
     }
   },
-  "generated_at_utc": "2026-09-12T19:30:19+00:00",
+  "generated_at_utc": "2026-09-12T19:39:01+00:00",
   "records": [
     {
       "accepted_patterns": [
@@ -10895,6 +10898,45 @@
             }
           ],
           "uncertainty": "Utility consumption varies seasonally, leading to changing monthly amounts."
+        },
+        {
+          "alternative_interpretations": [
+            "Could change due to promotions, bonuses, or contractual modifications."
+          ],
+          "category": "salary",
+          "grouping_rationale": "Consistent monthly salary credits on the 15th of each month.",
+          "label": "Payroll credit",
+          "pattern_type": "recurring_commitment",
+          "source_event_ids": [
+            "event_104",
+            "event_112",
+            "event_120",
+            "event_128",
+            "event_136"
+          ],
+          "supporting_observations": [
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-03-15",
+              "source_event_id": "event_104"
+            },
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-04-15",
+              "source_event_id": "event_112"
+            },
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-05-15",
+              "source_event_id": "event_120"
+            },
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-06-15",
+              "source_event_id": "event_128"
+            },
+            {
+              "observation": "Payroll credit of 33345000.00 IDR on 2025-07-15",
+              "source_event_id": "event_136"
+            }
+          ],
+          "uncertainty": "Future salary amounts are subject to employer adjustments."
         },
         {
           "alternative_interpretations": [
@@ -11259,6 +11301,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "education",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Course tuition",
             "pattern_id": "ai_pattern_0001",
             "pattern_type": "recurring_commitment",
@@ -11277,6 +11320,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "healthcare",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Clinic payment",
             "pattern_id": "ai_pattern_0002",
             "pattern_type": "recurring_commitment",
@@ -11295,6 +11339,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "housing",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Home repair reserve",
             "pattern_id": "ai_pattern_0003",
             "pattern_type": "recurring_commitment",
@@ -11314,6 +11359,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "insurance",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Household insurance",
             "pattern_id": "ai_pattern_0004",
             "pattern_type": "recurring_commitment",
@@ -11332,6 +11378,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "utilities",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Municipal utilities",
             "pattern_id": "ai_pattern_0005",
             "pattern_type": "recurring_commitment",
@@ -11348,10 +11395,30 @@
             "amount_policy": "deterministic_recent_statistic_only",
             "cadence_days": 30,
             "cadence_kind": "monthly_calendar_like",
+            "category": "salary",
+            "forecastable": true,
+            "income_eligibility": "recurring_salary_supported",
+            "label": "Payroll credit",
+            "pattern_id": "ai_pattern_0006",
+            "pattern_type": "recurring_commitment",
+            "recent_median": "33345000.00",
+            "source_event_ids": [
+              "event_104",
+              "event_112",
+              "event_120",
+              "event_128",
+              "event_136"
+            ]
+          },
+          {
+            "amount_policy": "deterministic_recent_statistic_only",
+            "cadence_days": 30,
+            "cadence_kind": "monthly_calendar_like",
             "category": "cloud_storage",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Shared storage plan",
-            "pattern_id": "ai_pattern_0006",
+            "pattern_id": "ai_pattern_0007",
             "pattern_type": "recurring_commitment",
             "recent_median": "369550.00",
             "source_event_ids": [
@@ -11368,8 +11435,9 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "entertainment",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "entertainment",
-            "pattern_id": "ai_pattern_0007",
+            "pattern_id": "ai_pattern_0008",
             "pattern_type": "variable_spending",
             "recent_median": "1289187.40",
             "source_event_ids": [
@@ -11386,8 +11454,9 @@
             "cadence_kind": "fixed_day_cadence",
             "category": "groceries",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "groceries",
-            "pattern_id": "ai_pattern_0008",
+            "pattern_id": "ai_pattern_0009",
             "pattern_type": "variable_spending",
             "recent_median": "2118766.78",
             "source_event_ids": [
@@ -11417,8 +11486,9 @@
             "cadence_kind": "biweekly_fixed_day",
             "category": "transport",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "transport",
-            "pattern_id": "ai_pattern_0009",
+            "pattern_id": "ai_pattern_0010",
             "pattern_type": "variable_spending",
             "recent_median": "1318747.50",
             "source_event_ids": [
@@ -11435,24 +11505,6 @@
               "event_173",
               "event_174",
               "event_175"
-            ]
-          },
-          {
-            "amount_policy": "deterministic_recent_statistic_only",
-            "cadence_days": 30,
-            "cadence_kind": "monthly_calendar_like",
-            "category": "salary",
-            "forecastable": true,
-            "label": "Payroll credit",
-            "pattern_id": "pattern_0006",
-            "pattern_type": "recurring_commitment",
-            "recent_median": "33345000.00",
-            "source_event_ids": [
-              "event_104",
-              "event_112",
-              "event_120",
-              "event_128",
-              "event_136"
             ]
           }
         ],
@@ -12146,6 +12198,107 @@
           },
           {
             "alternatives": [
+              "Could change due to promotions, bonuses, or contractual modifications."
+            ],
+            "category": "salary",
+            "forecastable": true,
+            "grouping_rationale": "Consistent monthly salary credits on the 15th of each month.",
+            "grouping_source": "validated_ai",
+            "label": "Payroll credit",
+            "pattern_id": "ai_pattern_0006",
+            "pattern_type": "recurring_commitment",
+            "source_event_ids": [
+              "event_104",
+              "event_112",
+              "event_120",
+              "event_128",
+              "event_136"
+            ],
+            "source_ids": [
+              "event_104",
+              "event_112",
+              "event_120",
+              "event_128",
+              "event_136"
+            ],
+            "stats": {
+              "amount_variability_stddev": "0.00",
+              "cadence_days": 30,
+              "cadence_kind": "monthly_calendar_like",
+              "coverage_days": 123,
+              "coverage_end": "2025-07-15",
+              "coverage_start": "2025-03-15",
+              "currency": "IDR",
+              "historical_maximum": "33345000.00",
+              "historical_minimum": "33345000.00",
+              "historical_range": "0.00",
+              "interval_days": [
+                31,
+                30,
+                31,
+                30
+              ],
+              "missing_buckets_are_not_zero": true,
+              "monthly_totals_observed": {
+                "2025-03": "33345000.00",
+                "2025-04": "33345000.00",
+                "2025-05": "33345000.00",
+                "2025-06": "33345000.00",
+                "2025-07": "33345000.00"
+              },
+              "observation_count": 5,
+              "observed_month_count": 5,
+              "observed_week_count": 5,
+              "occurrence_dates": [
+                "2025-03-15",
+                "2025-04-15",
+                "2025-05-15",
+                "2025-06-15",
+                "2025-07-15"
+              ],
+              "recent_amounts": [
+                "33345000.00",
+                "33345000.00",
+                "33345000.00",
+                "33345000.00",
+                "33345000.00"
+              ],
+              "recent_median": "33345000.00",
+              "sparse_history": false,
+              "weekly_totals_observed": {
+                "2025-03-10": "33345000.00",
+                "2025-04-14": "33345000.00",
+                "2025-05-12": "33345000.00",
+                "2025-06-09": "33345000.00",
+                "2025-07-14": "33345000.00"
+              }
+            },
+            "supporting_observations": [
+              {
+                "observation": "Payroll credit of 33345000.00 IDR on 2025-03-15",
+                "source_event_id": "event_104"
+              },
+              {
+                "observation": "Payroll credit of 33345000.00 IDR on 2025-04-15",
+                "source_event_id": "event_112"
+              },
+              {
+                "observation": "Payroll credit of 33345000.00 IDR on 2025-05-15",
+                "source_event_id": "event_120"
+              },
+              {
+                "observation": "Payroll credit of 33345000.00 IDR on 2025-06-15",
+                "source_event_id": "event_128"
+              },
+              {
+                "observation": "Payroll credit of 33345000.00 IDR on 2025-07-15",
+                "source_event_id": "event_136"
+              }
+            ],
+            "uncertainty": "Future salary amounts are subject to employer adjustments."
+          },
+          {
+            "alternatives": [
               "May be treated as a discretionary subscription rather than a mandatory recurring commitment."
             ],
             "category": "cloud_storage",
@@ -12153,7 +12306,7 @@
             "grouping_rationale": "Monthly recurring subscription payments for cloud storage on the 13th of each month.",
             "grouping_source": "validated_ai",
             "label": "Shared storage plan",
-            "pattern_id": "ai_pattern_0006",
+            "pattern_id": "ai_pattern_0007",
             "pattern_type": "recurring_commitment",
             "source_event_ids": [
               "event_111",
@@ -12254,7 +12407,7 @@
             "grouping_rationale": "Recurring monthly expenditure grouped under entertainment with fluctuating amounts.",
             "grouping_source": "validated_ai",
             "label": "entertainment",
-            "pattern_id": "ai_pattern_0007",
+            "pattern_id": "ai_pattern_0008",
             "pattern_type": "variable_spending",
             "source_event_ids": [
               "event_110",
@@ -12355,7 +12508,7 @@
             "grouping_rationale": "Frequent variable expenditure transactions related to grocery purchases and pantry shopping.",
             "grouping_source": "validated_ai",
             "label": "groceries",
-            "pattern_id": "ai_pattern_0008",
+            "pattern_id": "ai_pattern_0009",
             "pattern_type": "variable_spending",
             "source_event_ids": [
               "event_145",
@@ -12525,7 +12678,7 @@
             "grouping_rationale": "Regularly occurring transport-related expenses including fuel, rail passes, and commuter fares.",
             "grouping_source": "validated_ai",
             "label": "transport",
-            "pattern_id": "ai_pattern_0009",
+            "pattern_id": "ai_pattern_0010",
             "pattern_type": "variable_spending",
             "source_event_ids": [
               "event_163",
@@ -12670,7 +12823,7 @@
             "grouping_rationale": "Candidate lacks sufficient repetition to form a confirmed recurring pattern.",
             "grouping_source": "validated_ai",
             "label": "Bakery and snacks",
-            "pattern_id": "ai_pattern_0010",
+            "pattern_id": "ai_pattern_0011",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_176"
@@ -12726,7 +12879,7 @@
             "grouping_rationale": "Candidate lacks sufficient historical occurrences to confirm a recurring schedule.",
             "grouping_source": "validated_ai",
             "label": "Coffee shop",
-            "pattern_id": "ai_pattern_0011",
+            "pattern_id": "ai_pattern_0012",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_177"
@@ -12782,7 +12935,7 @@
             "grouping_rationale": "Single transaction without enough historical instances to establish a pattern.",
             "grouping_source": "validated_ai",
             "label": "Weekend food delivery",
-            "pattern_id": "ai_pattern_0012",
+            "pattern_id": "ai_pattern_0013",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_178"
@@ -12838,7 +12991,7 @@
             "grouping_rationale": "Standalone dining transaction with no established cadence.",
             "grouping_source": "validated_ai",
             "label": "Quick-service meal",
-            "pattern_id": "ai_pattern_0013",
+            "pattern_id": "ai_pattern_0014",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_179"
@@ -12894,7 +13047,7 @@
             "grouping_rationale": "Candidate lacks the necessary observations for pattern classification.",
             "grouping_source": "validated_ai",
             "label": "Takeaway order",
-            "pattern_id": "ai_pattern_0014",
+            "pattern_id": "ai_pattern_0015",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_180"
@@ -12950,7 +13103,7 @@
             "grouping_rationale": "Single dining record without historical reinforcement.",
             "grouping_source": "validated_ai",
             "label": "Neighbourhood restaurant",
-            "pattern_id": "ai_pattern_0015",
+            "pattern_id": "ai_pattern_0016",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_181"
@@ -13006,7 +13159,7 @@
             "grouping_rationale": "Isolated snack purchase lacking recurrence evidence.",
             "grouping_source": "validated_ai",
             "label": "Bakery and snacks",
-            "pattern_id": "ai_pattern_0016",
+            "pattern_id": "ai_pattern_0017",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_182"
@@ -13062,7 +13215,7 @@
             "grouping_rationale": "Single occurrence of family dinner without pattern support.",
             "grouping_source": "validated_ai",
             "label": "Family dinner",
-            "pattern_id": "ai_pattern_0017",
+            "pattern_id": "ai_pattern_0018",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_183"
@@ -13118,7 +13271,7 @@
             "grouping_rationale": "Standalone snack purchase with no recurring cadence.",
             "grouping_source": "validated_ai",
             "label": "Bakery and snacks",
-            "pattern_id": "ai_pattern_0018",
+            "pattern_id": "ai_pattern_0019",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_184"
@@ -13164,82 +13317,6 @@
               }
             ],
             "uncertainty": "Lacks longitudinal data."
-          },
-          {
-            "alternatives": [],
-            "category": "salary",
-            "forecastable": true,
-            "grouping_source": "deterministic",
-            "label": "Payroll credit",
-            "pattern_id": "pattern_0006",
-            "pattern_type": "recurring_commitment",
-            "source_event_ids": [
-              "event_104",
-              "event_112",
-              "event_120",
-              "event_128",
-              "event_136"
-            ],
-            "source_ids": [
-              "event_104",
-              "event_112",
-              "event_120",
-              "event_128",
-              "event_136"
-            ],
-            "stats": {
-              "amount_variability_stddev": "0.00",
-              "cadence_days": 30,
-              "cadence_kind": "monthly_calendar_like",
-              "coverage_days": 123,
-              "coverage_end": "2025-07-15",
-              "coverage_start": "2025-03-15",
-              "currency": "IDR",
-              "historical_maximum": "33345000.00",
-              "historical_minimum": "33345000.00",
-              "historical_range": "0.00",
-              "interval_days": [
-                31,
-                30,
-                31,
-                30
-              ],
-              "missing_buckets_are_not_zero": true,
-              "monthly_totals_observed": {
-                "2025-03": "33345000.00",
-                "2025-04": "33345000.00",
-                "2025-05": "33345000.00",
-                "2025-06": "33345000.00",
-                "2025-07": "33345000.00"
-              },
-              "observation_count": 5,
-              "observed_month_count": 5,
-              "observed_week_count": 5,
-              "occurrence_dates": [
-                "2025-03-15",
-                "2025-04-15",
-                "2025-05-15",
-                "2025-06-15",
-                "2025-07-15"
-              ],
-              "recent_amounts": [
-                "33345000.00",
-                "33345000.00",
-                "33345000.00",
-                "33345000.00",
-                "33345000.00"
-              ],
-              "recent_median": "33345000.00",
-              "sparse_history": false,
-              "weekly_totals_observed": {
-                "2025-03-10": "33345000.00",
-                "2025-04-14": "33345000.00",
-                "2025-05-12": "33345000.00",
-                "2025-06-09": "33345000.00",
-                "2025-07-14": "33345000.00"
-              }
-            },
-            "uncertainty": "deterministic cadence is supported by at least three settled observations"
           }
         ],
         "known_future_commitments": {
@@ -13266,15 +13343,15 @@
           ]
         },
         "model_metadata": {
-          "accepted_patterns": 18,
-          "cache_hit": false,
+          "accepted_patterns": 19,
+          "cache_hit": true,
           "estimated_cost_usd": null,
-          "input_tokens": 18702,
+          "input_tokens": null,
           "mode": "ai",
           "model": "google/gemini-3.5-flash-lite",
-          "output_tokens": 5677,
-          "rejected_patterns": 2,
-          "reported_cost_usd": "0.0198031",
+          "output_tokens": null,
+          "rejected_patterns": 1,
+          "reported_cost_usd": null,
           "retries": 0
         },
         "observed_historical_facts": {
@@ -14157,49 +14234,6 @@
         ],
         "unresolved_evidence_and_assumptions": [
           {
-            "index": 5,
-            "proposal": {
-              "alternative_interpretations": [
-                "Could change due to promotions, bonuses, or contractual modifications."
-              ],
-              "category": "salary",
-              "grouping_rationale": "Consistent monthly salary credits on the 15th of each month.",
-              "label": "Payroll credit",
-              "pattern_type": "recurring_commitment",
-              "source_event_ids": [
-                "event_104",
-                "event_112",
-                "event_120",
-                "event_128",
-                "event_136"
-              ],
-              "supporting_observations": [
-                {
-                  "observation": "Payroll credit of 33345000.00 IDR on 2025-03-15",
-                  "source_event_id": "event_104"
-                },
-                {
-                  "observation": "Payroll credit of 33345000.00 IDR on 2025-04-15",
-                  "source_event_id": "event_112"
-                },
-                {
-                  "observation": "Payroll credit of 33345000.00 IDR on 2025-05-15",
-                  "source_event_id": "event_120"
-                },
-                {
-                  "observation": "Payroll credit of 33345000.00 IDR on 2025-06-15",
-                  "source_event_id": "event_128"
-                },
-                {
-                  "observation": "Payroll credit of 33345000.00 IDR on 2025-07-15",
-                  "source_event_id": "event_136"
-                }
-              ],
-              "uncertainty": "Future salary amounts are subject to employer adjustments."
-            },
-            "reason": "spending patterns may only contain debit events"
-          },
-          {
             "index": 19,
             "proposal": {
               "alternative_interpretations": [
@@ -14837,49 +14871,6 @@
       },
       "rejected_patterns": [
         {
-          "index": 5,
-          "proposal": {
-            "alternative_interpretations": [
-              "Could change due to promotions, bonuses, or contractual modifications."
-            ],
-            "category": "salary",
-            "grouping_rationale": "Consistent monthly salary credits on the 15th of each month.",
-            "label": "Payroll credit",
-            "pattern_type": "recurring_commitment",
-            "source_event_ids": [
-              "event_104",
-              "event_112",
-              "event_120",
-              "event_128",
-              "event_136"
-            ],
-            "supporting_observations": [
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-03-15",
-                "source_event_id": "event_104"
-              },
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-04-15",
-                "source_event_id": "event_112"
-              },
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-05-15",
-                "source_event_id": "event_120"
-              },
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-06-15",
-                "source_event_id": "event_128"
-              },
-              {
-                "observation": "Payroll credit of 33345000.00 IDR on 2025-07-15",
-                "source_event_id": "event_136"
-              }
-            ],
-            "uncertainty": "Future salary amounts are subject to employer adjustments."
-          },
-          "reason": "spending patterns may only contain debit events"
-        },
-        {
           "index": 19,
           "proposal": {
             "alternative_interpretations": [
@@ -15356,6 +15347,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "debt_repayment",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Education loan instalment",
             "pattern_id": "ai_pattern_0001",
             "pattern_type": "recurring_commitment",
@@ -15374,6 +15366,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "education",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Professional training fee",
             "pattern_id": "ai_pattern_0002",
             "pattern_type": "recurring_commitment",
@@ -15392,6 +15385,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "rent",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Apartment rent transfer",
             "pattern_id": "ai_pattern_0003",
             "pattern_type": "recurring_commitment",
@@ -15411,6 +15405,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "utilities",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Household utility payment",
             "pattern_id": "ai_pattern_0004",
             "pattern_type": "recurring_commitment",
@@ -15429,6 +15424,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "delivery_membership",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Delivery service plan",
             "pattern_id": "ai_pattern_0005",
             "pattern_type": "recurring_commitment",
@@ -15447,6 +15443,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "music_subscription",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Music service subscription",
             "pattern_id": "ai_pattern_0006",
             "pattern_type": "recurring_commitment",
@@ -15465,6 +15462,7 @@
             "cadence_kind": "biweekly_fixed_day",
             "category": "dining",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "dining",
             "pattern_id": "ai_pattern_0007",
             "pattern_type": "variable_spending",
@@ -15483,6 +15481,7 @@
             "cadence_kind": "weekly_fixed_day",
             "category": "groceries",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "groceries",
             "pattern_id": "ai_pattern_0008",
             "pattern_type": "variable_spending",
@@ -15501,6 +15500,7 @@
             "cadence_kind": "weekly_fixed_day",
             "category": "transport",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "transport",
             "pattern_id": "ai_pattern_0009",
             "pattern_type": "variable_spending",
@@ -16888,14 +16888,14 @@
         },
         "model_metadata": {
           "accepted_patterns": 13,
-          "cache_hit": false,
+          "cache_hit": true,
           "estimated_cost_usd": null,
-          "input_tokens": 14936,
+          "input_tokens": null,
           "mode": "ai",
           "model": "google/gemini-3.5-flash-lite",
-          "output_tokens": 3871,
+          "output_tokens": null,
           "rejected_patterns": 0,
-          "reported_cost_usd": "0.0141583",
+          "reported_cost_usd": null,
           "retries": 0
         },
         "observed_historical_facts": {
@@ -18465,6 +18465,40 @@
         },
         {
           "alternative_interpretations": [
+            "Could be subject to employer adjustments or termination."
+          ],
+          "category": "salary",
+          "grouping_rationale": "Regular monthly salary income credits.",
+          "label": "Payroll credit",
+          "pattern_type": "recurring_commitment",
+          "source_event_ids": [
+            "event_358",
+            "event_366",
+            "event_374",
+            "event_382"
+          ],
+          "supporting_observations": [
+            {
+              "observation": "Payroll credit of 14740.00 ZAR on 2025-06-15",
+              "source_event_id": "event_358"
+            },
+            {
+              "observation": "Payroll credit of 14740.00 ZAR on 2025-07-15",
+              "source_event_id": "event_366"
+            },
+            {
+              "observation": "Payroll credit of 14740.00 ZAR on 2025-08-15",
+              "source_event_id": "event_374"
+            },
+            {
+              "observation": "Payroll credit of 14740.00 ZAR on 2025-09-15",
+              "source_event_id": "event_382"
+            }
+          ],
+          "uncertainty": "Employment status changed as indicated by the final payroll event later."
+        },
+        {
+          "alternative_interpretations": [
             "Pricing tier modifications by provider could alter future costs."
           ],
           "category": "cloud_storage",
@@ -18575,6 +18609,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "debt_repayment",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Vehicle loan payment",
             "pattern_id": "ai_pattern_0001",
             "pattern_type": "recurring_commitment",
@@ -18593,6 +18628,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "family_support",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Dependent care payment",
             "pattern_id": "ai_pattern_0002",
             "pattern_type": "recurring_commitment",
@@ -18611,6 +18647,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "healthcare",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Therapy appointment",
             "pattern_id": "ai_pattern_0003",
             "pattern_type": "recurring_commitment",
@@ -18629,6 +18666,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "rent",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Apartment rent transfer",
             "pattern_id": "ai_pattern_0004",
             "pattern_type": "recurring_commitment",
@@ -18648,6 +18686,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "utilities",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Municipal utilities",
             "pattern_id": "ai_pattern_0005",
             "pattern_type": "recurring_commitment",
@@ -18662,12 +18701,31 @@
           },
           {
             "amount_policy": "deterministic_recent_statistic_only",
+            "cadence_days": 31,
+            "cadence_kind": "monthly_calendar_like",
+            "category": "salary",
+            "forecastable": true,
+            "income_eligibility": "recurring_salary_supported",
+            "label": "Payroll credit",
+            "pattern_id": "ai_pattern_0006",
+            "pattern_type": "recurring_commitment",
+            "recent_median": "14740.00",
+            "source_event_ids": [
+              "event_358",
+              "event_366",
+              "event_374",
+              "event_382"
+            ]
+          },
+          {
+            "amount_policy": "deterministic_recent_statistic_only",
             "cadence_days": 30,
             "cadence_kind": "monthly_calendar_like",
             "category": "cloud_storage",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Cloud storage plan",
-            "pattern_id": "ai_pattern_0006",
+            "pattern_id": "ai_pattern_0007",
             "pattern_type": "recurring_commitment",
             "recent_median": "113.30",
             "source_event_ids": [
@@ -18684,8 +18742,9 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "shopping",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "shopping",
-            "pattern_id": "ai_pattern_0007",
+            "pattern_id": "ai_pattern_0008",
             "pattern_type": "variable_spending",
             "recent_median": "404.24",
             "source_event_ids": [
@@ -18698,27 +18757,11 @@
           },
           {
             "amount_policy": "deterministic_recent_statistic_only",
-            "cadence_days": 31,
-            "cadence_kind": "monthly_calendar_like",
-            "category": "salary",
-            "forecastable": true,
-            "label": "Payroll credit",
-            "pattern_id": "pattern_0006",
-            "pattern_type": "recurring_commitment",
-            "recent_median": "14740.00",
-            "source_event_ids": [
-              "event_358",
-              "event_366",
-              "event_374",
-              "event_382"
-            ]
-          },
-          {
-            "amount_policy": "deterministic_recent_statistic_only",
             "cadence_days": 7,
             "cadence_kind": "weekly_fixed_day",
             "category": "groceries",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "groceries",
             "pattern_id": "pattern_0008",
             "pattern_type": "variable_spending",
@@ -18758,6 +18801,7 @@
             "cadence_kind": "biweekly_fixed_day",
             "category": "transport",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "transport",
             "pattern_id": "pattern_0010",
             "pattern_type": "variable_spending",
@@ -19467,6 +19511,96 @@
           },
           {
             "alternatives": [
+              "Could be subject to employer adjustments or termination."
+            ],
+            "category": "salary",
+            "forecastable": true,
+            "grouping_rationale": "Regular monthly salary income credits.",
+            "grouping_source": "validated_ai",
+            "label": "Payroll credit",
+            "pattern_id": "ai_pattern_0006",
+            "pattern_type": "recurring_commitment",
+            "source_event_ids": [
+              "event_358",
+              "event_366",
+              "event_374",
+              "event_382"
+            ],
+            "source_ids": [
+              "event_358",
+              "event_366",
+              "event_374",
+              "event_382"
+            ],
+            "stats": {
+              "amount_variability_stddev": "0.00",
+              "cadence_days": 31,
+              "cadence_kind": "monthly_calendar_like",
+              "coverage_days": 93,
+              "coverage_end": "2025-09-15",
+              "coverage_start": "2025-06-15",
+              "currency": "ZAR",
+              "historical_maximum": "14740.00",
+              "historical_minimum": "14740.00",
+              "historical_range": "0.00",
+              "interval_days": [
+                30,
+                31,
+                31
+              ],
+              "missing_buckets_are_not_zero": true,
+              "monthly_totals_observed": {
+                "2025-06": "14740.00",
+                "2025-07": "14740.00",
+                "2025-08": "14740.00",
+                "2025-09": "14740.00"
+              },
+              "observation_count": 4,
+              "observed_month_count": 4,
+              "observed_week_count": 4,
+              "occurrence_dates": [
+                "2025-06-15",
+                "2025-07-15",
+                "2025-08-15",
+                "2025-09-15"
+              ],
+              "recent_amounts": [
+                "14740.00",
+                "14740.00",
+                "14740.00",
+                "14740.00"
+              ],
+              "recent_median": "14740.00",
+              "sparse_history": false,
+              "weekly_totals_observed": {
+                "2025-06-09": "14740.00",
+                "2025-07-14": "14740.00",
+                "2025-08-11": "14740.00",
+                "2025-09-15": "14740.00"
+              }
+            },
+            "supporting_observations": [
+              {
+                "observation": "Payroll credit of 14740.00 ZAR on 2025-06-15",
+                "source_event_id": "event_358"
+              },
+              {
+                "observation": "Payroll credit of 14740.00 ZAR on 2025-07-15",
+                "source_event_id": "event_366"
+              },
+              {
+                "observation": "Payroll credit of 14740.00 ZAR on 2025-08-15",
+                "source_event_id": "event_374"
+              },
+              {
+                "observation": "Payroll credit of 14740.00 ZAR on 2025-09-15",
+                "source_event_id": "event_382"
+              }
+            ],
+            "uncertainty": "Employment status changed as indicated by the final payroll event later."
+          },
+          {
+            "alternatives": [
               "Pricing tier modifications by provider could alter future costs."
             ],
             "category": "cloud_storage",
@@ -19474,7 +19608,7 @@
             "grouping_rationale": "Monthly subscription charges for cloud storage.",
             "grouping_source": "validated_ai",
             "label": "Cloud storage plan",
-            "pattern_id": "ai_pattern_0006",
+            "pattern_id": "ai_pattern_0007",
             "pattern_type": "recurring_commitment",
             "source_event_ids": [
               "event_364",
@@ -19575,7 +19709,7 @@
             "grouping_rationale": "Periodic personal shopping expenses.",
             "grouping_source": "validated_ai",
             "label": "shopping",
-            "pattern_id": "ai_pattern_0007",
+            "pattern_id": "ai_pattern_0008",
             "pattern_type": "variable_spending",
             "source_event_ids": [
               "event_365",
@@ -19676,7 +19810,7 @@
             "grouping_rationale": "Single instance of final employer payroll lacking sufficient recurring historical instances under this specific description.",
             "grouping_source": "validated_ai",
             "label": "Final employer payroll",
-            "pattern_id": "ai_pattern_0008",
+            "pattern_id": "ai_pattern_0009",
             "pattern_type": "unsupported_recurring",
             "source_event_ids": [
               "event_390"
@@ -19722,75 +19856,6 @@
               }
             ],
             "uncertainty": "Indicates a final payment, meaning future occurrence is unsupported."
-          },
-          {
-            "alternatives": [],
-            "category": "salary",
-            "forecastable": true,
-            "grouping_source": "deterministic",
-            "label": "Payroll credit",
-            "pattern_id": "pattern_0006",
-            "pattern_type": "recurring_commitment",
-            "source_event_ids": [
-              "event_358",
-              "event_366",
-              "event_374",
-              "event_382"
-            ],
-            "source_ids": [
-              "event_358",
-              "event_366",
-              "event_374",
-              "event_382"
-            ],
-            "stats": {
-              "amount_variability_stddev": "0.00",
-              "cadence_days": 31,
-              "cadence_kind": "monthly_calendar_like",
-              "coverage_days": 93,
-              "coverage_end": "2025-09-15",
-              "coverage_start": "2025-06-15",
-              "currency": "ZAR",
-              "historical_maximum": "14740.00",
-              "historical_minimum": "14740.00",
-              "historical_range": "0.00",
-              "interval_days": [
-                30,
-                31,
-                31
-              ],
-              "missing_buckets_are_not_zero": true,
-              "monthly_totals_observed": {
-                "2025-06": "14740.00",
-                "2025-07": "14740.00",
-                "2025-08": "14740.00",
-                "2025-09": "14740.00"
-              },
-              "observation_count": 4,
-              "observed_month_count": 4,
-              "observed_week_count": 4,
-              "occurrence_dates": [
-                "2025-06-15",
-                "2025-07-15",
-                "2025-08-15",
-                "2025-09-15"
-              ],
-              "recent_amounts": [
-                "14740.00",
-                "14740.00",
-                "14740.00",
-                "14740.00"
-              ],
-              "recent_median": "14740.00",
-              "sparse_history": false,
-              "weekly_totals_observed": {
-                "2025-06-09": "14740.00",
-                "2025-07-14": "14740.00",
-                "2025-08-11": "14740.00",
-                "2025-09-15": "14740.00"
-              }
-            },
-            "uncertainty": "deterministic cadence is supported by at least three settled observations"
           },
           {
             "alternatives": [],
@@ -20105,15 +20170,15 @@
           "pending_or_scheduled_obligations": []
         },
         "model_metadata": {
-          "accepted_patterns": 8,
-          "cache_hit": false,
+          "accepted_patterns": 9,
+          "cache_hit": true,
           "estimated_cost_usd": null,
-          "input_tokens": 14281,
+          "input_tokens": null,
           "mode": "ai",
           "model": "google/gemini-3.5-flash-lite",
-          "output_tokens": 3145,
-          "rejected_patterns": 1,
-          "reported_cost_usd": "0.0121468",
+          "output_tokens": null,
+          "rejected_patterns": 0,
+          "reported_cost_usd": null,
           "retries": 0
         },
         "observed_historical_facts": {
@@ -20923,46 +20988,7 @@
           ]
         },
         "supported_changes": [],
-        "unresolved_evidence_and_assumptions": [
-          {
-            "index": 5,
-            "proposal": {
-              "alternative_interpretations": [
-                "Could be subject to employer adjustments or termination."
-              ],
-              "category": "salary",
-              "grouping_rationale": "Regular monthly salary income credits.",
-              "label": "Payroll credit",
-              "pattern_type": "recurring_commitment",
-              "source_event_ids": [
-                "event_358",
-                "event_366",
-                "event_374",
-                "event_382"
-              ],
-              "supporting_observations": [
-                {
-                  "observation": "Payroll credit of 14740.00 ZAR on 2025-06-15",
-                  "source_event_id": "event_358"
-                },
-                {
-                  "observation": "Payroll credit of 14740.00 ZAR on 2025-07-15",
-                  "source_event_id": "event_366"
-                },
-                {
-                  "observation": "Payroll credit of 14740.00 ZAR on 2025-08-15",
-                  "source_event_id": "event_374"
-                },
-                {
-                  "observation": "Payroll credit of 14740.00 ZAR on 2025-09-15",
-                  "source_event_id": "event_382"
-                }
-              ],
-              "uncertainty": "Employment status changed as indicated by the final payroll event later."
-            },
-            "reason": "spending patterns may only contain debit events"
-          }
-        ]
+        "unresolved_evidence_and_assumptions": []
       },
       "as_of_date": "2025-11-06",
       "raw_proposals": {
@@ -21300,46 +21326,7 @@
           }
         ]
       },
-      "rejected_patterns": [
-        {
-          "index": 5,
-          "proposal": {
-            "alternative_interpretations": [
-              "Could be subject to employer adjustments or termination."
-            ],
-            "category": "salary",
-            "grouping_rationale": "Regular monthly salary income credits.",
-            "label": "Payroll credit",
-            "pattern_type": "recurring_commitment",
-            "source_event_ids": [
-              "event_358",
-              "event_366",
-              "event_374",
-              "event_382"
-            ],
-            "supporting_observations": [
-              {
-                "observation": "Payroll credit of 14740.00 ZAR on 2025-06-15",
-                "source_event_id": "event_358"
-              },
-              {
-                "observation": "Payroll credit of 14740.00 ZAR on 2025-07-15",
-                "source_event_id": "event_366"
-              },
-              {
-                "observation": "Payroll credit of 14740.00 ZAR on 2025-08-15",
-                "source_event_id": "event_374"
-              },
-              {
-                "observation": "Payroll credit of 14740.00 ZAR on 2025-09-15",
-                "source_event_id": "event_382"
-              }
-            ],
-            "uncertainty": "Employment status changed as indicated by the final payroll event later."
-          },
-          "reason": "spending patterns may only contain debit events"
-        }
-      ],
+      "rejected_patterns": [],
       "request_id": "request_05",
       "status": "validated",
       "user_id": "user_05"
@@ -21380,6 +21367,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "education",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "School fee payment",
             "pattern_id": "pattern_0001",
             "pattern_type": "recurring_commitment",
@@ -21398,6 +21386,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "healthcare",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Family healthcare expense",
             "pattern_id": "pattern_0002",
             "pattern_type": "recurring_commitment",
@@ -21416,6 +21405,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "housing",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Home association fee",
             "pattern_id": "pattern_0003",
             "pattern_type": "recurring_commitment",
@@ -21435,6 +21425,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "insurance",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Household insurance",
             "pattern_id": "pattern_0004",
             "pattern_type": "recurring_commitment",
@@ -21454,6 +21445,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "utilities",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Municipal utilities",
             "pattern_id": "pattern_0005",
             "pattern_type": "recurring_commitment",
@@ -21473,6 +21465,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "salary",
             "forecastable": true,
+            "income_eligibility": "recurring_salary_supported",
             "label": "Payroll credit",
             "pattern_id": "pattern_0006",
             "pattern_type": "recurring_commitment",
@@ -21491,6 +21484,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "cloud_storage",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "Shared storage plan",
             "pattern_id": "pattern_0007",
             "pattern_type": "recurring_commitment",
@@ -21509,6 +21503,7 @@
             "cadence_kind": "monthly_calendar_like",
             "category": "entertainment",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "entertainment",
             "pattern_id": "pattern_0008",
             "pattern_type": "variable_spending",
@@ -21527,6 +21522,7 @@
             "cadence_kind": "fixed_day_cadence",
             "category": "groceries",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "groceries",
             "pattern_id": "pattern_0009",
             "pattern_type": "variable_spending",
@@ -21558,6 +21554,7 @@
             "cadence_kind": "biweekly_fixed_day",
             "category": "transport",
             "forecastable": true,
+            "income_eligibility": "not_income",
             "label": "transport",
             "pattern_id": "pattern_0010",
             "pattern_type": "variable_spending",
@@ -23191,14 +23188,14 @@
         },
         "model_metadata": {
           "accepted_patterns": 1,
-          "cache_hit": false,
+          "cache_hit": true,
           "estimated_cost_usd": null,
-          "input_tokens": 18985,
+          "input_tokens": null,
           "mode": "ai",
           "model": "google/gemini-3.5-flash-lite",
-          "output_tokens": 620,
+          "output_tokens": null,
           "rejected_patterns": 3,
-          "reported_cost_usd": "0.0072455",
+          "reported_cost_usd": null,
           "retries": 0
         },
         "observed_historical_facts": {
@@ -24358,16 +24355,16 @@
   "schema_version": "financial-analysis-v1",
   "scope_count": 4,
   "usage": {
-    "average_cost_usd_per_scope": "0.013338425",
-    "average_tokens_per_scope": 20054.25,
-    "cache_hits": 0,
-    "input_tokens": 66904,
+    "average_cost_usd_per_scope": "0",
+    "average_tokens_per_scope": 0.0,
+    "cache_hits": 4,
+    "input_tokens": 0,
     "model": "google/gemini-3.5-flash-lite",
-    "output_tokens": 13313,
-    "provider_calls": 4,
+    "output_tokens": 0,
+    "provider_calls": 0,
     "retries": 0,
     "schema_version": "financial-analysis-v1",
-    "total_cost_usd": "0.0533537",
-    "total_tokens": 80217
+    "total_cost_usd": "0",
+    "total_tokens": 0
   }
 }
