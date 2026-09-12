@@ -20,7 +20,7 @@ CODE_DIR = Path(__file__).resolve().parent
 ROOT = CODE_DIR.parent
 sys.path.insert(0, str(CODE_DIR))
 
-from main import Agent, Data, ProjectionEvent, dec, ddate, fmt_amount, load_evidence_facts  # noqa: E402
+from main import Agent, Data, ProjectionEvent, dec, ddate, fmt_amount, load_evidence_facts, load_financial_analyses  # noqa: E402
 
 COMPARE_FIELDS = [
     "amount_safe_to_pay",
@@ -310,10 +310,13 @@ def main() -> None:
     parser.add_argument("--mode", choices=["deterministic", "ai"], default="deterministic")
     parser.add_argument("--evidence-file", type=Path,
                         default=ROOT / "evaluation/message_extraction_results.json")
+    parser.add_argument("--analysis-file", type=Path)
     args = parser.parse_args()
     data = Data()
     if args.mode == "ai":
         data.evidence_facts = load_evidence_facts(args.evidence_file, data.messages)
+        if args.analysis_file is not None:
+            data.financial_analyses = load_financial_analyses(args.analysis_file)
     agent = Agent(data)
     samples = load_samples()
     print(f"mode: {args.mode}")

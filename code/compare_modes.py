@@ -12,15 +12,17 @@ CODE = Path(__file__).resolve().parent
 sys.path.insert(0, str(CODE))
 
 from compare_samples import COMPARE_FIELDS, explanation_consistent, load_samples, plans_equal  # noqa: E402
-from main import Agent, Data, load_evidence_facts  # noqa: E402
+from main import Agent, Data, load_evidence_facts, load_financial_analyses  # noqa: E402
 
 ALL_FIELDS = COMPARE_FIELDS + ["explanation_consistency"]
 
 
-def run_agent(mode: str, evidence_file: Path) -> tuple[Data, Agent]:
+def run_agent(mode: str, evidence_file: Path, analysis_file: Path | None) -> tuple[Data, Agent]:
     data = Data()
     if mode == "ai":
         data.evidence_facts = load_evidence_facts(evidence_file, data.messages)
+        if analysis_file is not None:
+            data.financial_analyses = load_financial_analyses(analysis_file)
     return data, Agent(data)
 
 
@@ -41,9 +43,10 @@ def main() -> None:
                         default=ROOT / "evaluation/message_extraction_results.json")
     parser.add_argument("--output", type=Path,
                         default=ROOT / "evaluation/mode_comparison.md")
+    parser.add_argument("--analysis-file", type=Path)
     args = parser.parse_args()
     samples = load_samples()
-    modes = {mode: run_agent(mode, args.evidence_file) for mode in ("deterministic", "ai")}
+    modes = {mode: run_agent(mode, args.evidence_file, args.analysis_file if mode == "ai" else None) for mode in ("deterministic", "ai")}
     actual: dict[str, dict[str, dict[str, str]]] = {"deterministic": {}, "ai": {}}
     exceptions: dict[str, list[str]] = {"deterministic": [], "ai": []}
     for mode, (_, agent) in modes.items():
@@ -99,10 +102,11 @@ def main() -> None:
         lines.extend(f"  - {item}" for item in exceptions[mode])
     lines += [
         "", "## Source-backed interpretation", "",
-        "- AI mode consumed the 19 validated cached message facts before projection.",
+        "- AI mode consumed 16 validated cached message facts; 3 malformed provider responses were rejected and never entered projection.",
         "- `message_11` added a confirmed EUR 1661 salary credit on 2026-01-15 to request_15's timeline; the recommendation stayed unchanged.",
         "- Delayed/pending refunds, prizes, payouts, and disputed reversals were unresolved and never added cash.",
         "- Settled/non-cash facts were status-only; they did not duplicate starting-balance or event cash.",
+        "- When supplied, the analysis artifact contributed only validated source groups; deterministic code recalculated cadence, amounts, projections, and replay.",
     ]
     args.output.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))

@@ -6,3 +6,5 @@ __pycache__/
 !.env.example
 .cache/
 .evidence_cache/
+.analysis_cache/
+evaluation/financial_analysis_all_requests.json

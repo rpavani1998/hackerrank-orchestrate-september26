@@ -718,8 +718,61 @@ During this message-integration iteration:
 - No recurrence statistic, correction factor, extra reserve, or image extraction was introduced.
 - No push was performed.
 
+## Correction and financial-analysis checkpoint
+
+Commit `737b454` corrected two audited component defects before analysis work:
+
+- `transaction_type` and `update_status` are authoritative; legacy `action` must match a deterministic status mapping. Source wording rejects a `pending` label when it only describes a delayed/not-reached credit. Invalid provider outputs are recorded as rejected and are never cached or applied.
+- Recurrence uses named source-defined streams for commitments/subscriptions and category streams for variable groceries/transport/dining/shopping/entertainment. Explicit one-time markers are excluded, source IDs are retained, and explicit/inferred deduplication compares the same stream rather than category alone.
+
+The correction suite now has 46 tests passing. A read-only deterministic sample comparison has zero exceptions and reports 3/25 safe-amount matches, 19/25 affordability matches, 21/25 payment-method matches, 21/25 payment-plan matches, 18/25 earliest-date matches, 21/25 spending-change matches, and 25/25 explanation-consistency matches. These remain diagnostics, not labels to tune toward.
+
+### Scoped financial-history analysis
+
+`code/financial_analysis.py` adds the requested workflow layer:
+
+```text
+reconciled evidence -> scoped user analysis -> validated forecast inputs -> deterministic forecast -> payment decision
+```
+
+For each `(user_id, request_id, as_of_date)` scope it records supplied constraints,
+available-balance snapshot, historical coverage and gaps, observed category facts,
+distinct source-backed patterns, pending obligations, confirmed future income,
+supported evidence changes, unresolved items, assumptions, and source IDs. Historical
+transactions are descriptive and are not replayed against the supplied balance.
+
+OpenRouter receives deterministic summaries plus bounded candidate event rows. It
+may propose only source-linked recurring commitments, variable category groups,
+one-time events, or unsupported candidates. Deterministic validation rejects unknown
+IDs, cross-user links, contradictory categories, duplicate claims, non-settled
+historical spending claims, and unsupported cadence claims. Statistics and forecast
+amounts are recalculated from source rows in code; model confidence is not used as
+proof and the model cannot authorize spending changes or affordability decisions.
+
+Four representative scopes were evaluated: `request_02`, `request_01`, `request_05`,
+and `request_20`. Artifacts are:
+
+```text
+evaluation/financial_analysis_results.json
+evaluation/financial_analysis_profiles.md
+evaluation/analysis_forecast_trace.md
+```
+
+The live run recorded model `google/gemini-3.5-flash-lite`, 4 provider calls,
+66,904 input tokens, 13,313 output tokens, 80,217 total tokens, USD `0.0533537`,
+and 4 analysis-cache hits on the verification rerun. Invalid/unsupported proposals were
+preserved as review items. The trace demonstrates source events
+`event_105`…`event_144` → validated monthly housing pattern → projected
+`2025-09-04` debit of IDR 3,534,000 → deterministic replay balance effect.
+
+When the analysis artifact is supplied, AI mode uses validated source groups for
+forecast construction while recalculating cadence and amounts deterministically.
+The deterministic mode remains unchanged by the analysis artifact. Both modes ran
+all 25 samples with zero exceptions and no output-field differences. The analysis
+artifact was not used as a reason to claim prediction improvement.
+
 ## Next bounded task
 
 1. Automate extraction of the 16 supplied images as a separate checkpoint, preserving amount roles such as total, already-paid, and amount due.
-2. Resolve remaining message gaps: general status normalization (`pending` versus `delayed`), investment-sale transaction typing, and explicit cancellation evidence (none is present in the supplied messages).
+2. Resolve remaining lifecycle graph and analysis assumptions without adding speculative reserves or historical-maximum policy.
 3. Re-run both modes and the full 25-sample comparison after image integration, then package the final artifacts without staging `.env`.

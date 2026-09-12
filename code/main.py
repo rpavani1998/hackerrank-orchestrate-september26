@@ -114,6 +114,34 @@ def csv_rows(name: str) -> list[dict[str, str]]:
         return list(csv.DictReader(fh))
 
 
+def load_financial_analyses(path: Path) -> dict[tuple[str, str, date], dict[str, object]]:
+    """Load request-scoped, already validated analysis artifacts."""
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, dict) and isinstance(payload.get("records"), list):
+        records = payload["records"]
+    elif isinstance(payload, dict) and isinstance(payload.get("analyses_by_scope"), dict):
+        records = [{"analysis": analysis} for analysis in payload["analyses_by_scope"].values()]
+    else:
+        records = payload
+    if not isinstance(records, list):
+        raise EvidenceValidationError("financial analysis file must contain records or analyses_by_scope")
+    result: dict[tuple[str, str, date], dict[str, object]] = {}
+    for record in records:
+        if not isinstance(record, dict) or not isinstance(record.get("analysis"), dict):
+            raise EvidenceValidationError("financial analysis record is missing analysis")
+        analysis = record["analysis"]
+        scope = analysis.get("scope")
+        if not isinstance(scope, dict) or not all(isinstance(scope.get(key), str) for key in ("user_id", "request_id", "as_of_date")):
+            raise EvidenceValidationError("financial analysis scope is incomplete")
+        key = (scope["user_id"], scope["request_id"], ddate(scope["as_of_date"]))
+        if key[2] is None:
+            raise EvidenceValidationError("financial analysis scope has an invalid date")
+        if key in result:
+            raise EvidenceValidationError(f"duplicate financial analysis scope: {key}")
+        result[key] = analysis
+    return result
+
+
 def load_evidence_facts(path: Path, messages: list[dict[str, str]]) -> dict[str, EvidenceFact]:
     """Load only facts matching supplied message metadata and validate their scope."""
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -251,8 +279,10 @@ class Plan:
 
 
 class Data:
-    def __init__(self, evidence_facts: dict[str, EvidenceFact] | None = None) -> None:
+    def __init__(self, evidence_facts: dict[str, EvidenceFact] | None = None,
+                 financial_analyses: dict[tuple[str, str, date], dict[str, object]] | None = None) -> None:
         self.evidence_facts = evidence_facts or {}
+        self.financial_analyses = financial_analyses or {}
         self.profiles = self._profiles()
         self.requests = csv_rows("requests.csv")
         self.events = self._events()
@@ -502,6 +532,68 @@ class Agent:
             "single purchase", "explicitly one time",
         ))
 
+    def analysis_recurring_projection(self, request: dict[str, str], start: date, end: date, home: str) -> list[ProjectionEvent]:
+        as_of = ddate(request["request_date"]) or date.min
+        analysis = self.data.financial_analyses.get((request["user_id"], request["request_id"], as_of))
+        if analysis is None:
+            return self.recurring_projection(request["user_id"], start, end, home)
+        events_by_id = {event.event_id: event for event in self.data.events_by_user.get(request["user_id"], [])}
+        forecast_inputs = analysis.get("forecast_inputs")
+        if not isinstance(forecast_inputs, list):
+            raise EvidenceValidationError("analysis forecast_inputs must be a list")
+        result: list[ProjectionEvent] = []
+        claimed: set[str] = set()
+        final_income_date = max(
+            (event.settlement_date for event in events_by_id.values()
+             if event.direction == "credit" and "final" in event.description.lower()),
+            default=date.min,
+        )
+        for item in forecast_inputs:
+            if not isinstance(item, dict) or not item.get("forecastable"):
+                continue
+            if item.get("pattern_type") not in {"recurring_commitment", "variable_spending"}:
+                continue
+            source_ids = item.get("source_event_ids")
+            if not isinstance(source_ids, list) or not source_ids or any(event_id not in events_by_id for event_id in source_ids):
+                raise EvidenceValidationError("analysis forecast input contains an unknown event ID")
+            if claimed.intersection(source_ids):
+                raise EvidenceValidationError("analysis forecast inputs double-claim a source event")
+            group = [events_by_id[event_id] for event_id in source_ids]
+            if any(event.user_id != request["user_id"] or event.status != "settled" for event in group):
+                raise EvidenceValidationError("analysis forecast input is not a settled same-user source group")
+            if any(event.category != item.get("category") for event in group):
+                raise EvidenceValidationError("analysis forecast input category disagrees with its source events")
+            claimed.update(source_ids)
+            direction = group[0].direction
+            if direction == "credit":
+                stream_text = " ".join(event.description.lower() for event in group)
+                if final_income_date != date.min or not any(word in stream_text for word in ("salary", "payroll", "wage", "gaji")):
+                    continue
+                if any(word in stream_text for word in ("commission", "bonus", "payout", "earning", "invoice", "project", "retainer", "freelance")):
+                    continue
+            dates = sorted(event.settlement_date for event in group)
+            step = self.cadence(dates)
+            if step is None:
+                continue
+            last = max(group, key=lambda event: event.settlement_date)
+            values = [event.amount for event in sorted(group, key=lambda event: event.settlement_date)[-8:]]
+            stable = max(values) - min(values) <= max(CENT, median(values) * Decimal("0.08"))
+            source_amount = median(values[-3:]) if direction == "credit" else (
+                median(values) if stable else sorted(values)[max(0, int(len(values) * .75) - 1)]
+            )
+            source = self.data.convert(source_amount, last.currency, home, last.settlement_date)
+            monthly = step in range(27, 33)
+            month_step = 2 if step >= 58 else 1
+            next_when = add_months(last.settlement_date, month_step) if monthly else last.settlement_date + timedelta(days=step)
+            while next_when <= end:
+                if next_when > start:
+                    result.append(ProjectionEvent(
+                        next_when, source, direction, last.category, last.event_id,
+                        last.flexibility, last.event_id, tuple(source_ids),
+                    ))
+                next_when = add_months(next_when, month_step) if monthly else next_when + timedelta(days=step)
+        return result
+
     def recurring_projection(self, user_id: str, start: date, end: date, home: str) -> list[ProjectionEvent]:
         events = self.data.events_by_user.get(user_id, [])
         groups: dict[tuple[str, ...], list[Event]] = defaultdict(list)
@@ -570,7 +662,9 @@ class Agent:
         start = ddate(request["request_date"]) or date.min
         end = start + timedelta(days=DAYS)
         explicit = self.explicit_projection(request["user_id"], start, end, profile.home_currency)
-        recurring = self.recurring_projection(request["user_id"], start, end, profile.home_currency)
+        recurring = self.analysis_recurring_projection(request, start, end, profile.home_currency) \
+            if (request["user_id"], request["request_id"], start) in self.data.financial_analyses \
+            else self.recurring_projection(request["user_id"], start, end, profile.home_currency)
         event_by_id = {e.event_id: e for e in self.data.events_by_user.get(request["user_id"], [])}
         explicit_keys = {
             (p.when, self.recurrence_series_key(event_by_id[p.event_id]), p.direction)
@@ -886,13 +980,16 @@ def validate(rows: list[dict[str, str]], requests: list[dict[str, str]], options
                 assert token.startswith("stop:") or token.startswith("reduce_to:")
 
 
-def main(mode: str = "deterministic", evidence_path: Path | None = None) -> None:
+def main(mode: str = "deterministic", evidence_path: Path | None = None,
+         analysis_path: Path | None = None) -> None:
     if mode not in {"deterministic", "ai"}:
         raise ValueError(f"unsupported mode: {mode}; use deterministic or ai")
     data = Data()
     if mode == "ai":
         path = evidence_path or ROOT / "evaluation/message_extraction_results.json"
         data.evidence_facts = load_evidence_facts(path, data.messages)
+        if analysis_path is not None:
+            data.financial_analyses = load_financial_analyses(analysis_path)
     agent = Agent(data)
     rows = [agent.decide(request) for request in data.requests]
     validate(rows, data.requests, data.options)
@@ -910,5 +1007,6 @@ if __name__ == "__main__":
     parser.add_argument("--mode", choices=["deterministic", "ai"], default="deterministic")
     parser.add_argument("--evidence-file", type=Path,
                         default=ROOT / "evaluation/message_extraction_results.json")
+    parser.add_argument("--analysis-file", type=Path)
     args = parser.parse_args()
-    main(args.mode, args.evidence_file)
+    main(args.mode, args.evidence_file, args.analysis_file)

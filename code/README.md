@@ -69,6 +69,63 @@ performs structured-output capability checks, explicit timeouts, bounded
 408/409/429/5xx retries, local schema validation, complete cache keys, and
 provider usage/cost accounting with no model fallback.
 
+## User financial-history analysis
+
+`code/financial_analysis.py` implements the scoped analysis layer between
+reconciled evidence and forecast construction. Deterministic code owns event
+scope/lifecycle filtering, source-ID validation, recurrence grouping,
+statistics, future obligations, and forecast-input amounts. OpenRouter only
+proposes source-linked pattern groupings and alternatives; unknown IDs,
+cross-user links, contradictory categories, duplicate claims, and unsupported
+cadences remain review items.
+
+Representative AI analysis profiles can be reproduced without writing
+`output.csv`:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 code/evaluate_financial_analysis.py
+PYTHONDONTWRITEBYTECODE=1 python3 code/trace_analysis_forecast.py
+```
+
+Artifacts are written to `evaluation/financial_analysis_results.json`,
+`evaluation/financial_analysis_profiles.md`, and
+`evaluation/analysis_forecast_trace.md`; provider calls, tokens, retries, cache
+hits, and cost are recorded. The analysis cache is scoped by user, request,
+as-of date, input/prompt content, model, and schema versions and is ignored by
+Git. It never receives sample answer labels.
+
+AI-mode read-only comparisons may consume the validated analysis artifact:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 code/compare_samples.py --mode ai \
+  --evidence-file evaluation/message_extraction_results.json \
+  --analysis-file evaluation/financial_analysis_results.json
+PYTHONDONTWRITEBYTECODE=1 python3 code/compare_modes.py \
+  --evidence-file evaluation/message_extraction_results.json \
+  --analysis-file evaluation/financial_analysis_results.json \
+  --output evaluation/mode_comparison_analysis.md
+```
+
+The production command accepts the same optional interface:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 code/main.py --mode ai \
+  --evidence-file evaluation/message_extraction_results.json \
+  --analysis-file evaluation/financial_analysis_results.json
+```
+
+The analysis path is optional. Deterministic mode does not load it, and missing
+request scopes fall back to the corrected deterministic recurrence engine. To
+materialize keyed deterministic analyses for every evaluation request without
+model calls, use:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 code/build_analysis_artifact.py
+```
+
+This writes the development-only `evaluation/financial_analysis_all_requests.json`
+artifact (ignored because it contains the full 250-scope history expansion).
+
 The focused smoke test remains available:
 
 ```bash

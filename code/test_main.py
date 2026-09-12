@@ -108,6 +108,7 @@ class FinancialAgentTests(unittest.TestCase):
             profiles={"user_test": profile},
             messages_by_user={"user_test": []},
             evidence_facts={},
+            financial_analyses={},
             convert=lambda amount, _source, _target, _when: amount,
         )
         return Agent(data)
@@ -160,6 +161,52 @@ class FinancialAgentTests(unittest.TestCase):
         april = [p for p in projections if p.when == date(2025, 4, 1)]
         self.assertEqual(len(april), 1)
         self.assertEqual(april[0].event_id, "explicit")
+
+    def test_validated_analysis_does_not_forecast_payout_income(self):
+        events = [
+            self.synthetic_event("p1", date(2025, 1, 1), "Driver platform payout", "salary", "income", "credit"),
+            self.synthetic_event("p2", date(2025, 2, 1), "Driver platform payout", "salary", "income", "credit"),
+            self.synthetic_event("p3", date(2025, 3, 1), "Driver platform payout", "salary", "income", "credit"),
+        ]
+        agent = self.synthetic_agent(events)
+        agent.data.financial_analyses = {
+            ("user_test", "request_test", date(2025, 3, 15)): {
+                "forecast_inputs": [{
+                    "pattern_id": "payout_pattern", "pattern_type": "recurring_commitment",
+                    "category": "salary", "label": "Driver platform payout",
+                    "source_event_ids": ["p1", "p2", "p3"], "forecastable": True,
+                }]
+            }
+        }
+        request = {
+            "user_id": "user_test", "request_id": "request_test", "request_date": "2025-03-15",
+            "requested_amount": "1", "desired_completion_date": "2025-04-30", "allows_partial_payment": "false",
+        }
+        self.assertEqual([p for p in agent.projections(request) if p.when > date(2025, 3, 15)], [])
+
+    def test_validated_analysis_group_reaches_projection(self):
+        events = [
+            self.synthetic_event("a1", date(2025, 1, 1), "Video streaming plan"),
+            self.synthetic_event("a2", date(2025, 2, 1), "Video streaming plan"),
+            self.synthetic_event("a3", date(2025, 3, 1), "Video streaming plan"),
+        ]
+        agent = self.synthetic_agent(events)
+        agent.data.financial_analyses = {
+            ("user_test", "request_test", date(2025, 3, 15)): {
+                "forecast_inputs": [{
+                    "pattern_id": "ai_pattern_1", "pattern_type": "recurring_commitment",
+                    "category": "streaming", "label": "Video streaming plan",
+                    "source_event_ids": ["a1", "a2", "a3"], "forecastable": True,
+                }]
+            }
+        }
+        request = {
+            "user_id": "user_test", "request_id": "request_test", "request_date": "2025-03-15",
+            "requested_amount": "1", "desired_completion_date": "2025-04-30", "allows_partial_payment": "false",
+        }
+        projections = agent.projections(request)
+        self.assertEqual([p.event_id for p in projections if p.when == date(2025, 4, 1)], ["a3"])
+        self.assertEqual(next(p for p in projections if p.when == date(2025, 4, 1)).source_event_ids, ("a1", "a2", "a3"))
 
     def test_prediction_modes_are_explicit(self):
         with self.assertRaises(ValueError):
