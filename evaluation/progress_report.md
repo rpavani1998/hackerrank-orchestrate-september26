@@ -634,6 +634,14 @@ Important untested behavior includes:
 - plan ranking across all competing plan types
 - explanation details when spending changes are selected
 
+## Salary-dedupe and analysis freshness checkpoint
+
+Sparse continuation now sees explicit **and** recurring paydays and only fills gaps. A final uniqueness pass keeps one cash movement per identified stream/date. Generated salary evidence replaces overlapping sources only, so a second employer on the same date is kept. request_13 April/May are no longer doubled: safe **780-class / 941-class → 325.23**, earliest empty. request_01 sparse months remain.
+
+Analysis artifacts are versioned `financial-analysis-v2` with `cadence_policy=fixed-day-including-21-v1`. `load_financial_analyses()` skips stale records (deterministic fallback). Sample scopes were rebuilt (25/25 current, 0 live copies). After rebuild, deterministic and AI sample amount matches are both **2/25** — the previous 2 vs 4 gap was stale analysis omitting 21-day streams, not an AI improvement.
+
+Comparisons: `evaluation/sample_comparison_deterministic_after_salary_dedupe.txt`, `evaluation/sample_comparison_ai_after_salary_dedupe.txt`. Tests: 78. `output.csv` unchanged.
+
 ## Percentage rent amendment checkpoint
 
 Relative rent changes are parsed from source text (`increases monthly rent by 12%`), stored as percent/direction/category/next-occurrence/source, and applied with `Decimal` to the next regular rent on or after the request date. Outstanding arrears stay unchanged. Repeating the same amendment does not compound. request_16: regular rent 57100 → **63952**; scheduled outstanding **100000** untouched. Amount matches unchanged vs the 21-day checkpoint. Comparisons: `evaluation/sample_comparison_deterministic_after_rent_percent.txt`.

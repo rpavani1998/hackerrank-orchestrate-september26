@@ -474,6 +474,70 @@ class FinancialAgentTests(unittest.TestCase):
         ]
         self.assertEqual(self.synthetic_agent(events).recurring_projection("user_test", date(2025, 1, 24), date(2025, 3, 1), "USD"), [])
 
+    def test_sparse_helper_does_not_duplicate_recurring_salary(self):
+        events = [
+            self.synthetic_event("event_1055", date(2023, 10, 15), "Primary household salary", "salary", "income", "credit", amount=Decimal("1343.54")),
+            self.synthetic_event("event_1063", date(2023, 11, 15), "Primary household salary", "salary", "income", "credit", amount=Decimal("1343.54")),
+            self.synthetic_event("event_1071", date(2023, 12, 15), "Primary household salary", "salary", "income", "credit", amount=Decimal("1343.54")),
+            self.synthetic_event("event_1079", date(2024, 1, 15), "Primary household salary", "salary", "income", "credit", amount=Decimal("1343.54")),
+            self.synthetic_event("event_1087", date(2024, 2, 15), "Primary household salary", "salary", "income", "credit", amount=Decimal("1343.54")),
+            self.synthetic_event("event_1161", date(2024, 3, 15), "Next confirmed salary", "salary", "income", "credit",
+                                 status="scheduled", amount=Decimal("1343.54")),
+        ]
+        agent = self.synthetic_agent(events)
+        request = {
+            "user_id": "user_test", "request_id": "request_test", "request_date": "2024-03-07",
+            "requested_amount": "941.6", "desired_completion_date": "2024-05-15", "allows_partial_payment": "true",
+        }
+        credits = [p for p in agent.projections(request) if p.direction == "credit" and p.category == "salary"]
+        by_date: dict[date, list] = {}
+        for projection in credits:
+            by_date.setdefault(projection.when, []).append(projection)
+        self.assertEqual(len(by_date[date(2024, 3, 15)]), 1)
+        self.assertEqual(len(by_date[date(2024, 4, 15)]), 1)
+        self.assertEqual(len(by_date[date(2024, 5, 15)]), 1)
+        self.assertEqual(by_date[date(2024, 4, 15)][0].amount, Decimal("1343.54"))
+        self.assertNotEqual(by_date[date(2024, 4, 15)][0].replacement_reason, "sparse_confirmed_salary_continuation")
+
+    def test_generated_salary_does_not_drop_a_second_employer_on_same_date(self):
+        events = [
+            self.synthetic_event("event_1", date(2025, 1, 15), "Acme employer payroll", "salary", "income", "credit", amount=Decimal("100")),
+            self.synthetic_event("event_2", date(2025, 2, 15), "Acme employer payroll", "salary", "income", "credit", amount=Decimal("100")),
+            self.synthetic_event("event_3", date(2025, 3, 15), "Acme employer payroll", "salary", "income", "credit", amount=Decimal("100")),
+            self.synthetic_event("event_4", date(2025, 1, 15), "Beta employer payroll", "salary", "income", "credit", amount=Decimal("80")),
+            self.synthetic_event("event_5", date(2025, 2, 15), "Beta employer payroll", "salary", "income", "credit", amount=Decimal("80")),
+            self.synthetic_event("event_6", date(2025, 3, 15), "Beta employer payroll", "salary", "income", "credit", amount=Decimal("80")),
+        ]
+        messages = [{"message_id": "message_80", "user_id": "user_test", "request_id": "request_test",
+                     "sent_at": "2025-03-20", "message_text": "Acme salary is USD 120 from 2025-04-15."}]
+        mapping = self.salary_fact("message_80", "120", "2025-04-15", "amended", "future_occurrences", "effective_date").to_mapping()
+        mapping["supplied_event_id"] = "event_3"
+        bound = EvidenceFact.from_mapping(mapping)
+        agent, request = self.evidence_agent(events, messages, [bound], "2025-03-20")
+        april = [p for p in agent.projections(request) if p.when == date(2025, 4, 15) and p.category == "salary"]
+        self.assertEqual(len(april), 2)
+        amounts = sorted(p.amount for p in april)
+        self.assertEqual(amounts, [Decimal("80"), Decimal("120")])
+
+    def test_resumed_stream_does_not_remove_other_employer_same_payday(self):
+        events = [
+            self.synthetic_event("event_1", date(2025, 3, 15), "Acme employer payroll", "salary", "income", "credit", amount=Decimal("100")),
+            self.synthetic_event("event_2", date(2025, 4, 15), "Acme employer payroll", "salary", "income", "credit", amount=Decimal("100")),
+            self.synthetic_event("event_3", date(2025, 7, 15), "Acme employer payroll", "salary", "income", "credit", amount=Decimal("100")),
+            self.synthetic_event("event_4", date(2025, 5, 15), "Beta employer payroll", "salary", "income", "credit", amount=Decimal("80")),
+            self.synthetic_event("event_5", date(2025, 6, 15), "Beta employer payroll", "salary", "income", "credit", amount=Decimal("80")),
+            self.synthetic_event("event_6", date(2025, 7, 15), "Beta employer payroll", "salary", "income", "credit", amount=Decimal("80")),
+        ]
+        messages = [{"message_id": "message_10", "user_id": "user_test", "request_id": "", "sent_at": "2025-07-27",
+                     "message_text": "Regular salary of USD 100 resumes on 2025-08-15."}]
+        mapping = self.salary_fact("message_10", "100", "2025-08-15", "resumed", "future_occurrences", "effective_date").to_mapping()
+        mapping["supplied_event_id"] = "event_3"
+        fact = EvidenceFact.from_mapping(mapping)
+        agent, request = self.evidence_agent(events, messages, [fact], "2025-08-04")
+        august = [p for p in agent.projections(request) if p.when == date(2025, 8, 15) and p.category == "salary"]
+        self.assertEqual(len(august), 2)
+        self.assertEqual(sorted(p.amount for p in august), [Decimal("80"), Decimal("100")])
+
     def test_sparse_confirmed_salary_continues_from_next_confirmed_row(self):
         events = [
             self.synthetic_event("event_25", date(2024, 2, 15), "Prorated first salary", "salary", "income", "credit", amount=Decimal("12826")),

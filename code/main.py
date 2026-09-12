@@ -118,8 +118,10 @@ def csv_rows(name: str) -> list[dict[str, str]]:
 
 
 def load_financial_analyses(path: Path) -> dict[tuple[str, str, date], dict[str, object]]:
-    """Load request-scoped, already validated analysis artifacts."""
+    """Load request-scoped analysis artifacts that match the current cadence policy."""
+    from financial_analysis import analysis_artifact_is_current
     payload = json.loads(path.read_text(encoding="utf-8"))
+    payload_meta = payload if isinstance(payload, dict) else {}
     if isinstance(payload, dict) and isinstance(payload.get("records"), list):
         records = payload["records"]
     elif isinstance(payload, dict) and isinstance(payload.get("analyses_by_scope"), dict):
@@ -133,6 +135,8 @@ def load_financial_analyses(path: Path) -> dict[tuple[str, str, date], dict[str,
         if not isinstance(record, dict) or not isinstance(record.get("analysis"), dict):
             raise EvidenceValidationError("financial analysis record is missing analysis")
         analysis = record["analysis"]
+        if not analysis_artifact_is_current(analysis, payload_meta):
+            continue
         scope = analysis.get("scope")
         if not isinstance(scope, dict) or not all(isinstance(scope.get(key), str) for key in ("user_id", "request_id", "as_of_date")):
             raise EvidenceValidationError("financial analysis scope is incomplete")
@@ -590,13 +594,28 @@ class Agent:
             when = add_months(when, 1) if monthly else when + timedelta(days=step)
         return result
 
+    def salary_sources(self, projection: ProjectionEvent) -> set[str]:
+        return {item for item in (*projection.source_event_ids, projection.event_id, projection.recurring_ref) if item}
+
+    def salary_credits_on(self, projections: list[ProjectionEvent], when: date) -> list[ProjectionEvent]:
+        return [p for p in projections if p.when == when and p.direction == "credit" and p.category == "salary"]
+
+    def salary_occurrence_exists(self, pool: list[ProjectionEvent], candidate: ProjectionEvent) -> bool:
+        same_day = self.salary_credits_on(pool, candidate.when)
+        candidate_sources = self.salary_sources(candidate)
+        for existing in same_day:
+            if self.salary_sources(existing) & candidate_sources:
+                return True
+        return False
+
     def sparse_confirmed_salary_continuation(
         self, user_id: str, start: date, end: date, home: str,
         explicit: list[ProjectionEvent], event_by_id: dict[str, Event],
+        already: list[ProjectionEvent] | None = None,
     ) -> list[ProjectionEvent]:
-        """Continue a confirmed next salary only when history plus that confirmation establish a monthly stream."""
+        """Fill missing later paydays of a confirmed stream; do not clone recurring ones."""
         result: list[ProjectionEvent] = []
-        existing = {(p.when, p.direction, p.category) for p in explicit}
+        pool = list(already if already is not None else explicit)
         history = self.historical_salary_events(user_id, start)
         for projection in explicit:
             event = event_by_id.get(projection.event_id)
@@ -618,14 +637,54 @@ class Agent:
             when = add_months(projection.when, 1)
             sources = self.merged_source_ids((projection.event_id,), (item.event_id for item in same_day))
             while when <= end:
-                if when > start and (when, "credit", "salary") not in existing:
-                    result.append(ProjectionEvent(
+                if when > start:
+                    candidate = ProjectionEvent(
                         when, projection.amount, "credit", "salary", projection.event_id,
                         event.flexibility, "", sources, "sparse_confirmed_salary_continuation",
-                    ))
-                    existing.add((when, "credit", "salary"))
+                    )
+                    if not self.salary_occurrence_exists(pool + result, candidate):
+                        result.append(candidate)
                 when = add_months(when, 1)
         return result
+
+    def dedupe_salary_occurrences(self, projections: list[ProjectionEvent]) -> list[ProjectionEvent]:
+        """Keep one cash movement per identified salary stream and payday."""
+        drop: set[int] = set()
+        indexed = list(enumerate(projections))
+        for i, left in indexed:
+            if i in drop or left.direction != "credit" or left.category != "salary":
+                continue
+            for j, right in indexed:
+                if j <= i or j in drop or right.direction != "credit" or right.category != "salary":
+                    continue
+                if left.when != right.when:
+                    continue
+                if not (self.salary_sources(left) & self.salary_sources(right)):
+                    continue
+                loser = j if self._salary_keep_rank(left) <= self._salary_keep_rank(right) else i
+                drop.add(loser)
+        return [projection for index, projection in indexed if index not in drop]
+
+    @staticmethod
+    def _salary_keep_rank(projection: ProjectionEvent) -> int:
+        if projection.replacement_reason == "sparse_confirmed_salary_continuation":
+            return 2
+        if projection.recurring_ref:
+            return 1
+        return 0
+
+    def merge_generated_salary(self, result: list[ProjectionEvent], generated: list[ProjectionEvent]) -> list[ProjectionEvent]:
+        """Replace only the identified stream's payday, not every salary on that date."""
+        if not generated:
+            return result
+        drop: set[int] = set()
+        for generated_row in generated:
+            same_day = self.salary_credits_on(result, generated_row.when)
+            generated_sources = self.salary_sources(generated_row)
+            matched = [row for row in same_day if self.salary_sources(row) & generated_sources]
+            for row in matched:
+                drop.add(id(row))
+        return [row for row in result if id(row) not in drop] + generated
 
     def parse_relative_rent_amendment(self, text: str, source_id: str) -> RelativeExpenseAmendment | None:
         match = RENT_PERCENT_RE.search(text or "")
@@ -1062,9 +1121,11 @@ class Agent:
             not in explicit_keys
         ]
         explicit, recurring = self.reconcile_explicit_inferred_credits(explicit, recurring, event_by_id)
-        result = explicit + recurring + self.sparse_confirmed_salary_continuation(
-            request["user_id"], start, end, profile.home_currency, explicit, event_by_id,
+        already = explicit + recurring
+        sparse = self.sparse_confirmed_salary_continuation(
+            request["user_id"], start, end, profile.home_currency, explicit, event_by_id, already,
         )
+        result = self.dedupe_salary_occurrences(already + sparse)
         relevant_messages = self.relevant_messages(request["user_id"], request["request_id"], start)
         applications = self.salary_evidence_applications(relevant_messages, profile.home_currency)
         ended_dates = self.evidence_salary_end_dates(relevant_messages)
@@ -1113,9 +1174,8 @@ class Agent:
                     source_event_ids=(application.source_id,),
                     replacement_reason="salary_evidence_once" if application.recurrence_scope == "once" else "salary_evidence_payday",
                 ))
-        generated_dates = {p.when for p in generated}
-        result = [p for p in result if not (p.category == "salary" and p.when in generated_dates)]
-        result = result + generated
+        result = self.merge_generated_salary(result, generated)
+        result = self.dedupe_salary_occurrences(result)
         result = self.apply_relative_expense_amendments(result, relevant_messages, event_by_id, start)
         return result
 

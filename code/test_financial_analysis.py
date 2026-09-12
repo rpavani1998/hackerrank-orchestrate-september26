@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from datetime import date
@@ -7,17 +8,20 @@ from types import SimpleNamespace
 
 from evidence_extraction import EvidenceFact
 from financial_analysis import (
+    ANALYSIS_CADENCE_POLICY,
+    ANALYSIS_SCHEMA_VERSION,
     AnalysisCache,
     AnalysisExtractor,
     AnalysisProviderResponse,
     AnalysisValidationError,
+    analysis_artifact_is_current,
     build_financial_analysis,
     build_prompt,
     cadence,
     cadence_description,
     validate_proposals,
 )
-from main import Data, Event, load_evidence_facts
+from main import Data, Event, load_evidence_facts, load_financial_analyses
 
 ROOT = Path(__file__).parents[1]
 
@@ -118,6 +122,26 @@ class FinancialAnalysisTests(unittest.TestCase):
         validation = validate_proposals({"patterns": [valid, dict(valid, source_event_ids=["event_1", "event_3"]), dict(valid, source_event_ids=["event_unknown", "event_2"]) ]}, events, "user_a")
         self.assertEqual(len(validation.accepted), 1)
         self.assertEqual(len(validation.rejected), 2)
+
+    def test_stale_analysis_artifact_is_not_current(self):
+        stale = {"schema_version": "financial-analysis-v1", "cadence_policy": "pre-21-day"}
+        current = {"schema_version": ANALYSIS_SCHEMA_VERSION, "cadence_policy": ANALYSIS_CADENCE_POLICY}
+        self.assertFalse(analysis_artifact_is_current(stale))
+        self.assertTrue(analysis_artifact_is_current(current))
+
+    def test_load_financial_analyses_skips_stale_records(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "analyses.json"
+            path.write_text(json.dumps({
+                "schema_version": "financial-analysis-v1",
+                "records": [{
+                    "analysis": {
+                        "schema_version": "financial-analysis-v1",
+                        "scope": {"user_id": "user_01", "request_id": "request_01", "as_of_date": "2024-03-03"},
+                    }
+                }],
+            }), encoding="utf-8")
+            self.assertEqual(load_financial_analyses(path), {})
 
     def test_cadence_accepts_supported_21_day_history(self):
         dates = [date(2025, 1, 2), date(2025, 1, 23), date(2025, 2, 13), date(2025, 3, 6)]

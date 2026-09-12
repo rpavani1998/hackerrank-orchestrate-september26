@@ -28,8 +28,9 @@ from evidence_extraction import (
     validate_evidence_semantics,
 )
 
-ANALYSIS_SCHEMA_VERSION = "financial-analysis-v1"
+ANALYSIS_SCHEMA_VERSION = "financial-analysis-v2"
 ANALYSIS_PROMPT_VERSION = "financial-analysis-prompt-v1"
+ANALYSIS_CADENCE_POLICY = "fixed-day-including-21-v1"
 ANALYSIS_PATTERN_TYPES = {
     "recurring_commitment", "variable_spending", "one_time", "unsupported_recurring",
 }
@@ -365,6 +366,13 @@ def analysis_json_schema() -> dict[str, Any]:
     }
 
 
+def analysis_artifact_is_current(analysis: Mapping[str, Any], payload: Mapping[str, Any] | None = None) -> bool:
+    meta = payload or {}
+    schema = analysis.get("schema_version") or meta.get("schema_version")
+    policy = analysis.get("cadence_policy") or meta.get("cadence_policy")
+    return schema == ANALYSIS_SCHEMA_VERSION and policy == ANALYSIS_CADENCE_POLICY
+
+
 def analysis_cache_key(scope: Mapping[str, Any], prompt: str, model_name: str) -> str:
     payload = {
         "scope": _json_safe(dict(scope)),
@@ -372,6 +380,7 @@ def analysis_cache_key(scope: Mapping[str, Any], prompt: str, model_name: str) -
         "model": model_name,
         "schema_version": ANALYSIS_SCHEMA_VERSION,
         "prompt_version": ANALYSIS_PROMPT_VERSION,
+        "cadence_policy": ANALYSIS_CADENCE_POLICY,
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
 
@@ -847,6 +856,7 @@ def build_financial_analysis(data: Any, user_id: str, as_of: date, request_id: s
     pending_ids = {row["event_id"] for row in pending_rows}
     analysis = {
         "schema_version": ANALYSIS_SCHEMA_VERSION,
+        "cadence_policy": ANALYSIS_CADENCE_POLICY,
         "scope": {"user_id": user_id, "as_of_date": as_of.isoformat(), "request_id": request_id},
         "supplied_preferences_and_constraints": {
             "home_currency": profile.home_currency,
