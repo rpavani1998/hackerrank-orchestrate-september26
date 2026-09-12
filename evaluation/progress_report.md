@@ -7,10 +7,11 @@ Generated from the current repository state on branch `main`.
 - Branch: `main`
 - Current tracked production file: `code/main.py`
 - Sample-comparison checkpoint: `5fcccc1` (`test: add sample comparison harness and baseline`)
-- No tracked production diff was present before the checkpoint commits.
-- Remaining unrelated/uncommitted paths are listed in [Change inventory](#change-inventory).
+- Documentation checkpoint: `fa486bc` (`docs: record implementation status and forecast discrepancies`)
+- The baseline checkpoint had no tracked production diff; this iteration has an intentionally uncommitted amendment fix in `code/main.py` and regression coverage in `code/test_main.py`.
+- Remaining uncommitted paths are listed in [Change inventory](#change-inventory).
 
-This report records the state after the initial implementation, architecture review, and sample-comparison baseline. No correction factor or forecasting-policy change was made. The harness/baseline and this report are intentionally separate local checkpoints; no push was performed.
+This report records the initial baseline plus the targeted four-request audit and one evidence-backed salary-amendment correction. No correction factor, historical-maxima policy, or extra reserve was used for the safe-amount discrepancies; no commit or push was performed.
 
 ## Current implementation
 
@@ -339,33 +340,108 @@ has no single obvious source event in the current trace and remains unexplained.
 
 The expected safe amount does not reveal the expected low-point date. It is not valid to assume that the expected reserve was accumulated by exactly the same August 13 event sequence.
 
+## Targeted four-request audit and one coherent correction
+
+The complete read-only audit is saved separately at:
+
+```text
+evaluation/request_targets_investigation.txt
+```
+
+It contains the relevant profile, event, message, and image rows for `request_01`, `request_02`, `request_05`, and `request_20`; every recurrence group with historical source IDs, cadence, inferred dates, and amounts; final 90-day projections; daily baseline balances; first minimum-balance breach; and a full-request replay. It also records that the only loaded starting snapshot is `current_available_balance`; no independent balance-snapshot event is available.
+
+### Findings by request
+
+| Request | Current safe / expected | Full 90-day baseline result | Finding |
+|---|---:|---|---|
+| `request_01` | 6,242.62 / 25,256 ZAR | Low 24,242.62 ZAR on 2024-06-01; no baseline breach. A full payment first breaches on 2024-05-02 at 15,460.72 ZAR. | Recurrence groups are source-backed: monthly rent/utilities/education/debt/subscriptions plus weekly groceries/transport and biweekly dining. The sample does not identify a different low date or reserve rule, so changing recurrence amounts would be speculative. |
+| `request_02` | 17,864,721.20 / 17,229,139.20 IDR | Low 47,023,121.20 IDR on 2025-08-13; no baseline breach. | The pre-amendment low is fully explained by the listed projected debits. `message_01` is a confirmed future salary amendment defect, but it occurs after the low and cannot explain this safe-amount mismatch. |
+| `request_05` | 0 / 737 ZAR | Low 8,757.30 ZAR on 2026-02-04; first baseline breach on 2026-02-02 at 9,889.28 ZAR. | The final-employer-payroll record is explicitly the last income event, and the projected rent, utilities, debt, healthcare, family support, subscription, shopping, groceries, and transport series have source rows. The expected low date and reserve rule are not supplied; excluding one series would be unsupported. |
+| `request_20` | 17,006.40 / 5,400 INR | Low 81,506.40 INR on 2026-02-13; no baseline breach. | Image `image_05` independently shows INR 704.05 for `event_1786` and is included. Pending debit `event_1787` is included; pending refund `event_1785` is excluded as an unreceived credit. The remaining difference has no source-proven missing event or lifecycle correction. |
+
+### Confirmed request-02 amendment defect
+
+The source series contains monthly settled payroll events `event_104`, `event_112`, `event_120`, `event_128`, and `event_136`, each IDR 33,345,000. `message_01` is an employer message received before the request and states:
+
+```text
+Gaji bulanan Anda naik menjadi IDR 42750000.
+Perubahan ini berlaku mulai 2025-08-15.
+```
+
+Before this iteration, `Agent.projections()` removed the old salary only on the exact message date and appended the message salary there. It left the later inferred occurrences at the old amount:
+
+```text
+2025-08-15: 42,750,000  message_payroll
+2025-09-15: 33,345,000  inferred from event_136  # incorrect
+2025-10-15: 33,345,000  inferred from event_136  # incorrect
+```
+
+That behavior contradicts the explicit effective-date amendment. The smallest correction updates every projected salary occurrence on or after an applicable parsed amendment date while retaining the existing same-date replacement behavior. After the correction:
+
+```text
+2025-08-15: 42,750,000  message_payroll
+2025-09-15: 42,750,000  inferred from event_136
+2025-10-15: 42,750,000  inferred from event_136
+```
+
+The focused regression test is:
+
+```text
+code/test_main.py::FinancialAgentTests::test_salary_amendment_persists_to_later_occurrences
+```
+
+Its expected dates and amount come directly from the employer message's effective date and amount plus the supported monthly source series; it does not use the solved safe amount as its oracle.
+
+### Why the correction does not change request-02 safe amount
+
+The complete baseline replay's low occurs on 2025-08-13, before the amended salary begins on 2025-08-15. Therefore, the correction is source-correct but cannot change the current request-02 safe amount. The 635,582 IDR discrepancy remains unresolved without a justified reserve or recurrence-policy rule. The same principle prevents using this fix to alter `request_01`, `request_05`, or `request_20`.
+
+### Unresolved assumptions and required clarification
+
+- The sample outputs provide a safe amount but not the date of the expected low point. A monetary difference cannot be assigned to a specific event sequence without that date.
+- The engine's category grouping is intentionally broad for expenses, but each target's grouped events have consistent cadences and source histories in the audit. No unrelated category merge, duplicate occurrence, or missing explicit event was established strongly enough to change production policy.
+- Pending debit treatment is source-supported for `request_02` and `request_20`; pending credits are not available cash under the challenge rules. The request-20 refund message confirms that the pending credit has not reached the account.
+- No separate balance snapshot, daily spending allowance, or organizer reserve statistic appears in the supplied evidence. The precise clarification needed is: **Should the 90-day reserve use the full projected cash timeline with the engine's recurrence statistic, and if so, what statistic and expected low-point date should be used for variable category spending?**
+- Historical maxima, correction multipliers, and extra reserves remain intentionally unintroduced.
+
 ## Verification
 
-### Checks run during this documentation step
+### Checks run during this iteration
+
+The saved baseline remains unchanged at `evaluation/sample_baseline.txt`. This iteration's comparison output is saved separately at:
+
+```text
+evaluation/sample_comparison_after_salary_fix.txt
+```
+
+Commands and results:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 code/compare_samples.py > evaluation/sample_baseline.txt
+cd code && PYTHONDONTWRITEBYTECODE=1 python3 -m unittest test_main.FinancialAgentTests.test_salary_amendment_persists_to_later_occurrences -v
+# 1 test passed
+
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s code -p 'test_*.py' -v
+# 8 tests passed
+
+PYTHONDONTWRITEBYTECODE=1 python3 code/compare_samples.py > evaluation/sample_comparison_after_salary_fix.txt
+# exit status: 0; samples: 25; exceptions: 0
 ```
 
-Observed result:
+The post-fix comparison has the same aggregate results as the saved baseline:
 
 ```text
-exit status: 0
-samples: 25
-exceptions: 0
-report lines: 112
+amount_safe_to_pay: 3/25
+affordability_status: 19/25
+recommended_payment_method: 21/25
+payment_plan: 21/25
+earliest_date_for_full_payment: 17/25
+spending_changes_needed: 20/25
+explanation_consistency: 25/25
 ```
 
-The diagnostic did not invoke `code/main.py:main()` and did not overwrite `output.csv`.
+A full diff of the two comparison artifacts is empty, so this focused fix caused zero sample-output regressions and zero sample-output improvements. It corrects the future salary timeline but not any solved output field in these samples.
 
-Git state was also inspected before checkpointing:
-
-```text
-starting commit: 044845a8befe36a01248311dc03db351632f5135
-sample-comparison checkpoint: 5fcccc1
-branch: main
-tracked production diff: none
-```
+The diagnostic and tests did not invoke `code/main.py:main()` and did not overwrite `output.csv`. No commit or push was performed.
 
 ### Previously reported checks, not rerun during this step
 
@@ -392,6 +468,7 @@ Previously reported results included:
 - selected image-only amounts are nonzero
 - direct and inverse exchange conversion
 - pending debit inclusion
+- salary amendment persistence across later recurring occurrences
 - one installment schedule match
 - partial-payment shape if the engine happens to select partial payment
 - below-floor replay rejection
@@ -425,51 +502,48 @@ The sample-comparison harness and its reproducible baseline were committed toget
   evaluation/sample_baseline.txt
 ```
 
-### Remaining untracked/unrelated paths
+### Current uncommitted change inventory
 
-After that checkpoint, the current `git status --short` reports these untracked paths:
+The current working-tree changes for this uncommitted iteration are:
+
+```text
+M  code/main.py
+?? code/test_main.py
+ M evaluation/progress_report.md
+?? evaluation/request_targets_investigation.txt
+?? evaluation/sample_comparison_after_salary_fix.txt
+```
+
+Previously untracked unrelated artifacts remain preserved and are not part of this fix:
 
 ```text
 .gitignore
 code.zip
 code/README.md
-code/test_main.py
-evaluation/progress_report.md
 evaluation/usage_report.md
 output.csv
 ```
 
-These are intentionally not part of the harness checkpoint. `log.txt` is ignored by `.gitignore` and remains the required transcript artifact.
+`log.txt` is ignored by `.gitignore` and remains the required transcript artifact.
 
 ### Production/output preservation
 
-During the diagnostic and documentation step:
+During this targeted investigation:
 
-- `code/main.py` was not edited.
-- No production extraction, forecasting, or payment logic was changed.
-- No correction factor was added.
-- No production logic commit was created and no push was performed.
-- Two local, reviewable checkpoints were created: the harness/baseline checkpoint and this documentation checkpoint.
-- `output.csv` was not targeted or overwritten.
-- The diagnostic artifact and report were created/updated without regenerating predictions.
+- `code/main.py` changed only to persist explicit salary amendments to later recurring salary occurrences.
+- `code/test_main.py` gained the focused request-02 regression test.
+- `evaluation/request_targets_investigation.txt` records the pre-fix four-request audit.
+- `evaluation/sample_comparison_after_salary_fix.txt` records the post-fix all-sample comparison.
+- `evaluation/sample_baseline.txt` was preserved unchanged.
+- No historical-maxima policy, correction factor, or extra reserve was added.
+- No commit or push was performed.
+- `output.csv` was not targeted or overwritten; prediction generation was not invoked.
 
 ## Next steps
 
-Before changing forecasting policy, audit representative failures:
+The one confirmed defect from this iteration is corrected locally but intentionally uncommitted. Before any further policy change:
 
-1. `request_02`
-   - Focus: upper-quartile recurrence amounts, the August 13 low point, and the unexplained 100,031.79 IDR residual.
-   - Relevant functions: `Agent.recurring_projection()`, `Agent.replay()`, `Agent.safe_amount()`.
-   - Verification: source-linked event ledger and a focused recurrence-policy test.
-
-2. `request_01`
-   - Focus: why the current forecast makes the request not recommended while the sample permits full payment.
-   - Relevant functions: `Agent.recurring_projection()`, `Agent.safe_amount()`, and `Agent.earliest_full()`.
-   - Verification: separate fixed commitments, essential variable spending, and flexible spending in the trace; do not change policy until the reserve difference is source-explained.
-
-3. `request_05` and `request_20`
-   - Focus: cases where the current engine returns zero or substantially different safe amounts and where pending/image-linked obligations may dominate.
-   - Relevant functions: `Data._events()`, `Agent.explicit_projection()`, `Agent.recurring_projection()`, and `Agent.safe_amount()`.
-   - Verification: trace pending debits, image-derived amounts, failed/cancelled records, and recurrence windows independently.
-
-The smallest justified next action is a read-only audit report for these four requests, not a production forecast change. Once the audits identify a common source-backed rule, add a focused regression test before changing `Agent.recurring_projection()` or `Agent.safe_amount()`.
+1. Obtain clarification on the recurrence reserve statistic and expected low-point date for the remaining safe-amount discrepancies.
+2. Keep `request_01`, `request_05`, and `request_20` as unresolved audit cases; do not remove source-backed projected events or add unsupported reserves.
+3. Review the salary-amendment diff and focused test, then create one coherent local checkpoint if accepted.
+4. Preserve `evaluation/sample_baseline.txt` as the original baseline and compare any future policy experiment in a new artifact.

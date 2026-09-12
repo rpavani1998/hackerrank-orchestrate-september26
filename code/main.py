@@ -458,12 +458,29 @@ class Agent:
         # recurrence on the same day/category, so do not count both.
         recurring = [p for p in recurring if (p.when, p.category, p.direction) not in explicit_keys]
         result = explicit + recurring
-        message_salary = self.salary_message_projection(request["user_id"], request["request_id"], start, end, profile.home_currency)
+        message_facts = self.message_facts(
+            self.relevant_messages(request["user_id"], request["request_id"], start),
+            profile.home_currency,
+        )
+        message_salary = [
+            ProjectionEvent(when, amount, "credit", "salary", "message_payroll")
+            for when, amount, _ in message_facts
+            if start < when <= end
+        ]
         # An employer amendment replaces the old payroll estimate on the same
-        # effective date; it is not an additional salary.
+        # effective date and continues to apply to later occurrences of that
+        # recurring salary stream.
         message_dates = {p.when for p in message_salary}
         result = [p for p in result if not (p.category == "salary" and p.when in message_dates)]
-        result += message_salary
+        amendments = sorted((when, amount) for when, amount, _ in message_facts)
+        adjusted = []
+        for p in result:
+            applicable = [amount for when, amount in amendments if when <= p.when]
+            if p.category == "salary" and applicable:
+                p = ProjectionEvent(p.when, applicable[-1], p.direction, p.category,
+                                    p.event_id, p.flexibility, p.recurring_ref)
+            adjusted.append(p)
+        result = adjusted + message_salary
         return result
 
     def eligible_changes(self, request: dict[str, str], projections: list[ProjectionEvent]) -> list[Change]:
