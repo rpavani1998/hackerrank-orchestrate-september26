@@ -634,6 +634,12 @@ Important untested behavior includes:
 - plan ranking across all competing plan types
 - explanation details when spending changes are selected
 
+## Resumed salary evidence checkpoint
+
+`Agent.salary_evidence_applications()` keeps status, recurrence scope, date meaning, source id, and the `EvidenceFact`. Resumed `future_occurrences` salary now expands through the 90-day horizon using the evidenced payday and historical day-of-month. Multiple facts per message are stored; a childcare fact without amount/dates stays unresolved and creates no cash. Stream amendments apply only to the matched employer. Regex-extracted payroll changes default to continuing amendments, not a one-off credit.
+
+request_14 salary credits: 2025-08-15, 09-15, 10-15 at EUR 2717 (`message_10` + historical payroll). Safe amount 0.00 → **610.80** (expected 597.74). Childcare remains unresolved in the cache (no amount). Tests 66. Sample matches unchanged at 3/25. Comparisons: `evaluation/sample_comparison_deterministic_after_resumed_salary.txt`, `evaluation/sample_comparison_ai_after_resumed_salary.txt`.
+
 ## Salary occurrence reconciliation checkpoint
 
 Cause: commit `737b454` changed explicit/inferred dedup from `(date, category, direction)` to `(date, description-keyed series, direction)`. A scheduled `Next confirmed salary` row and the inferred continuation of `Payroll credit` / `Primary household salary` stopped matching, so the same payday was credited twice.

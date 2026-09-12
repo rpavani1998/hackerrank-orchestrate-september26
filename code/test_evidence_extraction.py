@@ -108,9 +108,10 @@ class EvidenceExtractionTests(unittest.TestCase):
         different_label["transaction_type"] = "purchase"
         different_label["update_status"] = "cancelled"
         different_label["action"] = "cancellation"
+        ledger.add(EvidenceFact.from_mapping(different_label, origin="deterministic"))
+        self.assertEqual(len(ledger), 2)
         with self.assertRaises(DuplicateEvidenceError):
-            ledger.add(EvidenceFact.from_mapping(different_label, origin="deterministic"))
-        self.assertEqual(len(ledger), 1)
+            ledger.add(fact)
 
     def test_delayed_refund_stays_unresolved_without_cash_effect(self):
         source = EvidenceSource(**{**self.message_14_source().__dict__, "visibility_date": date(2026, 2, 6)})

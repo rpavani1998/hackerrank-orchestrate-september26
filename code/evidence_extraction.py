@@ -372,9 +372,9 @@ class EvidenceFact:
             "conflicts": list(self.conflicts),
         }
 
-    def application_key(self) -> tuple[str, str | None]:
-        """Stable source/event key used to prevent double application."""
-        return self.source_id, self.supplied_event_id
+    def application_key(self) -> tuple[str, str | None, str]:
+        """Stable source/event/type key used to prevent double application."""
+        return self.source_id, self.supplied_event_id, self.transaction_type
 
 
 @dataclass(frozen=True)
@@ -566,7 +566,7 @@ class EvidenceLedger:
     """Reject duplicate application when deterministic and model paths converge."""
 
     def __init__(self) -> None:
-        self._keys: set[tuple[str, str | None]] = set()
+        self._keys: set[tuple[str, str | None, str]] = set()
 
     def add(self, fact: EvidenceFact) -> None:
         key = fact.application_key()

@@ -142,7 +142,19 @@ def load_financial_analyses(path: Path) -> dict[tuple[str, str, date], dict[str,
     return result
 
 
-def load_evidence_facts(path: Path, messages: list[dict[str, str]]) -> dict[str, EvidenceFact]:
+def as_fact_tuple(value: EvidenceFact | tuple[EvidenceFact, ...] | list[EvidenceFact] | None) -> tuple[EvidenceFact, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, EvidenceFact):
+        return (value,)
+    return tuple(value)
+
+
+def facts_for_source(store: dict[str, EvidenceFact | tuple[EvidenceFact, ...]], source_id: str) -> tuple[EvidenceFact, ...]:
+    return as_fact_tuple(store.get(source_id))
+
+
+def load_evidence_facts(path: Path, messages: list[dict[str, str]]) -> dict[str, tuple[EvidenceFact, ...]]:
     """Load only facts matching supplied message metadata and validate their scope."""
     payload = json.loads(path.read_text(encoding="utf-8"))
     raw_facts = payload.get("facts") if isinstance(payload, dict) else payload
@@ -150,7 +162,7 @@ def load_evidence_facts(path: Path, messages: list[dict[str, str]]) -> dict[str,
         raise EvidenceValidationError("AI evidence file must contain a facts list")
     message_by_id = {row["message_id"]: row for row in messages}
     ledger = EvidenceLedger()
-    result: dict[str, EvidenceFact] = {}
+    grouped: dict[str, list[EvidenceFact]] = defaultdict(list)
     for raw in raw_facts:
         fact = EvidenceFact.from_mapping(raw, origin="ai-cache")
         row = message_by_id.get(fact.source_id)
@@ -171,8 +183,8 @@ def load_evidence_facts(path: Path, messages: list[dict[str, str]]) -> dict[str,
         application = apply_evidence_fact(fact, source, date.max, ledger)
         if application.state == "not_visible":
             raise EvidenceValidationError(f"AI fact is not visible: {fact.source_id}")
-        result[fact.source_id] = fact
-    return result
+        grouped[fact.source_id].append(fact)
+    return {source_id: tuple(facts) for source_id, facts in grouped.items()}
 
 
 @dataclass
@@ -262,6 +274,18 @@ class ProjectionEvent:
     replacement_reason: str = ""
 
 
+@dataclass(frozen=True)
+class SalaryEvidenceApplication:
+    when: date
+    amount: Decimal
+    source: str
+    source_id: str
+    update_status: str
+    recurrence_scope: str
+    date_meaning: str
+    fact: EvidenceFact | None = None
+
+
 @dataclass
 class Plan:
     method: str
@@ -280,7 +304,7 @@ class Plan:
 
 
 class Data:
-    def __init__(self, evidence_facts: dict[str, EvidenceFact] | None = None,
+    def __init__(self, evidence_facts: dict[str, EvidenceFact | tuple[EvidenceFact, ...]] | None = None,
                  financial_analyses: dict[tuple[str, str, date], dict[str, object]] | None = None) -> None:
         self.evidence_facts = evidence_facts or {}
         self.financial_analyses = financial_analyses or {}
@@ -424,50 +448,159 @@ class Agent:
                 facts.append((when, value, "message payroll"))
         return facts
 
-    def evidence_message_facts(self, messages: Iterable[dict[str, str]], home_currency: str) -> list[tuple[date, Decimal, str]]:
-        """Convert validated AI salary facts into the existing projection tuple shape."""
-        facts: list[tuple[date, Decimal, str]] = []
+    def facts_for_message(self, message_id: str) -> tuple[EvidenceFact, ...]:
+        return facts_for_source(self.data.evidence_facts, message_id)
+
+    def salary_evidence_applications(self, messages: Iterable[dict[str, str]], home_currency: str) -> list[SalaryEvidenceApplication]:
+        """Keep salary evidence semantics; do not collapse facts to anonymous tuples first."""
+        applications: list[SalaryEvidenceApplication] = []
         for message in messages:
-            fact = self.data.evidence_facts.get(message["message_id"])
-            if fact is None:
-                facts.extend(self.message_facts([message], home_currency))
+            stored = self.facts_for_message(message["message_id"])
+            if not stored:
+                for when, amount, source in self.message_facts([message], home_currency):
+                    text = message.get("message_text", "").lower()
+                    status = "resumed" if "resume" in text else "amended"
+                    applications.append(SalaryEvidenceApplication(
+                        when, amount, source, message["message_id"], status, "future_occurrences", "effective_date",
+                    ))
                 continue
-            # A validated non-salary fact is consumed as evidence but cannot
-            # create salary cash. It is intentionally not sent through the
-            # deterministic parser, preventing duplicate interpretation.
-            if fact.transaction_type != "salary":
-                continue
-            if fact.update_status == "ended":
-                continue
-            if fact.update_status not in {"amended", "confirmed", "resumed"} or fact.amount is None:
-                continue
-            date_by_meaning = {item.meaning: item.value for item in fact.dates}
-            when = (
-                date_by_meaning.get("effective_date")
-                or date_by_meaning.get("payment_date")
-                or date_by_meaning.get("settlement_date")
-                or date_by_meaning.get("completion_date")
-                or ddate(message["sent_at"])
-            )
-            if when is None or fact.currency is None:
-                continue
-            try:
-                amount = self.data.convert(fact.amount, fact.currency, home_currency, when)
-            except ValueError:
-                # No fixed rate means the fact is validated but not financially applied.
-                continue
-            facts.append((when, amount, "message evidence"))
-        return facts
+            for fact in stored:
+                if fact.transaction_type != "salary" or fact.update_status == "ended":
+                    continue
+                if fact.update_status not in {"amended", "confirmed", "resumed"} or fact.amount is None:
+                    continue
+                date_by_meaning = {item.meaning: item.value for item in fact.dates}
+                meaning = next(
+                    (name for name in ("payment_date", "effective_date", "settlement_date", "completion_date") if name in date_by_meaning),
+                    "effective_date" if "effective_date" in date_by_meaning else "payment_date",
+                )
+                when = date_by_meaning.get(meaning) or ddate(message["sent_at"])
+                if when is None or fact.currency is None:
+                    continue
+                try:
+                    amount = self.data.convert(fact.amount, fact.currency, home_currency, when)
+                except ValueError:
+                    continue
+                applications.append(SalaryEvidenceApplication(
+                    when, amount, "message evidence", fact.source_id, fact.update_status,
+                    fact.recurrence_scope, meaning, fact,
+                ))
+        return applications
+
+    def evidence_message_facts(self, messages: Iterable[dict[str, str]], home_currency: str) -> list[tuple[date, Decimal, str]]:
+        """Compatibility view of salary applications as date/amount pairs."""
+        return [(item.when, item.amount, item.source) for item in self.salary_evidence_applications(messages, home_currency)]
 
     def evidence_salary_end_dates(self, messages: Iterable[dict[str, str]]) -> list[date]:
-        return [
-            ddate(message["sent_at"])
-            for message in messages
-            if self.data.evidence_facts.get(message["message_id"]) is not None
-            and self.data.evidence_facts[message["message_id"]].transaction_type == "salary"
-            and self.data.evidence_facts[message["message_id"]].update_status == "ended"
-            and ddate(message["sent_at"]) is not None
-        ]
+        ended: list[date] = []
+        for message in messages:
+            for fact in self.facts_for_message(message["message_id"]):
+                if fact.transaction_type != "salary" or fact.update_status != "ended":
+                    continue
+                date_by_meaning = {item.meaning: item.value for item in fact.dates}
+                when = (
+                    date_by_meaning.get("effective_date")
+                    or date_by_meaning.get("payment_date")
+                    or date_by_meaning.get("settlement_date")
+                    or ddate(message["sent_at"])
+                )
+                if when is not None:
+                    ended.append(when)
+        return ended
+
+    def unresolved_evidence(self, messages: Iterable[dict[str, str]]) -> list[EvidenceFact]:
+        unresolved: list[EvidenceFact] = []
+        for message in messages:
+            for fact in self.facts_for_message(message["message_id"]):
+                if fact.transaction_type == "salary" and fact.update_status in {"amended", "confirmed", "resumed", "ended"}:
+                    continue
+                if fact.amount is None or not fact.dates:
+                    unresolved.append(fact)
+        return unresolved
+
+    def historical_salary_events(self, user_id: str, start: date) -> list[Event]:
+        events = []
+        for event in self.data.events_by_user.get(user_id, []):
+            if event.direction != "credit" or event.category != "salary" or event.status != "settled":
+                continue
+            if event.settlement_date >= start or self.is_explicit_one_time(event):
+                continue
+            text = self.normalized_description(event.description)
+            if any(word in text for word in ("commission", "bonus", "payout", "earning", "invoice", "project", "retainer", "freelance", "prize", "refund")):
+                continue
+            events.append(event)
+        return sorted(events, key=lambda event: event.settlement_date)
+
+    def resumed_salary_step(self, history: list[Event], application: SalaryEvidenceApplication) -> int | None:
+        dates = [event.settlement_date for event in history]
+        same_day = [event for event in history if event.settlement_date.day == application.when.day]
+        if same_day or (history and history[-1].settlement_date.day == application.when.day):
+            return 30
+        return self.cadence(dates) if len(dates) >= 3 else None
+
+    def expand_resumed_salary(self, application: SalaryEvidenceApplication, user_id: str,
+                              start: date, end: date, home: str) -> list[ProjectionEvent]:
+        history = self.historical_salary_events(user_id, start)
+        if application.fact and application.fact.supplied_event_id:
+            history = [event for event in history if event.event_id == application.fact.supplied_event_id or event.linked_event_id == application.fact.supplied_event_id] or history
+        if len({event.amount for event in history}) > 1:
+            matched = [event for event in history if self.data.convert(event.amount, event.currency, home, event.settlement_date) == application.amount]
+            if matched:
+                history = matched
+        step = self.resumed_salary_step(history, application)
+        if step is None:
+            if start < application.when <= end:
+                return [ProjectionEvent(
+                    application.when, application.amount, "credit", "salary", "message_payroll",
+                    source_event_ids=(application.source_id,) + tuple(event.event_id for event in history),
+                    replacement_reason="salary_evidence_resume_once",
+                )]
+            return []
+        first = application.when
+        if application.date_meaning == "effective_date" and history:
+            # An effective date that is not itself a payday starts at the next cycle day.
+            if first.day != history[-1].settlement_date.day:
+                candidate = date(first.year, first.month, min(history[-1].settlement_date.day, 28))
+                if candidate < first:
+                    candidate = add_months(candidate, 1)
+                first = candidate
+        monthly = step in range(27, 33) or step == 30
+        result: list[ProjectionEvent] = []
+        when = first
+        sources = self.merged_source_ids((application.source_id,), (event.event_id for event in history))
+        while when <= end:
+            if when > start:
+                result.append(ProjectionEvent(
+                    when, application.amount, "credit", "salary", "message_payroll",
+                    source_event_ids=sources, replacement_reason="salary_evidence_resumed_stream",
+                ))
+            when = add_months(when, 1) if monthly else when + timedelta(days=step)
+        return result
+
+    def salary_stream_key(self, projection: ProjectionEvent) -> str:
+        if projection.recurring_ref:
+            return projection.recurring_ref
+        if projection.event_id == "message_payroll":
+            return projection.source_event_ids[0] if projection.source_event_ids else "message_payroll"
+        return projection.event_id
+
+    def matching_salary_projections(self, projections: list[ProjectionEvent], application: SalaryEvidenceApplication) -> list[ProjectionEvent]:
+        salaries = [p for p in projections if p.direction == "credit" and p.category == "salary"]
+        if application.fact and application.fact.supplied_event_id:
+            linked = application.fact.supplied_event_id
+            matched = [p for p in salaries if linked in p.source_event_ids or p.recurring_ref == linked or p.event_id == linked]
+            if matched:
+                return matched
+        groups: dict[str, list[ProjectionEvent]] = defaultdict(list)
+        for projection in salaries:
+            groups[self.salary_stream_key(projection)].append(projection)
+        if len(groups) == 1:
+            return salaries
+        amount_hits = [p for p in salaries if p.amount == application.amount]
+        if amount_hits and len({self.salary_stream_key(p) for p in amount_hits}) == 1:
+            key = self.salary_stream_key(amount_hits[0])
+            return groups[key]
+        return []
 
     @staticmethod
     def status_counts_as_cash(event: Event) -> bool:
@@ -811,35 +944,56 @@ class Agent:
         explicit, recurring = self.reconcile_explicit_inferred_credits(explicit, recurring, event_by_id)
         result = explicit + recurring
         relevant_messages = self.relevant_messages(request["user_id"], request["request_id"], start)
-        message_facts = self.evidence_message_facts(relevant_messages, profile.home_currency)
+        applications = self.salary_evidence_applications(relevant_messages, profile.home_currency)
         ended_dates = self.evidence_salary_end_dates(relevant_messages)
+        resume_dates = sorted(item.when for item in applications if item.update_status == "resumed")
         if ended_dates:
-            result = [
-                p for p in result
-                if not (p.category == "salary" and any(p.when > ended for ended in ended_dates))
-            ]
-        message_salary = [
-            ProjectionEvent(when, amount, "credit", "salary", "message_payroll")
-            for when, amount, _ in message_facts
-            if start < when <= end
-        ]
-        # An employer amendment replaces the old payroll estimate on the same
-        # effective date and continues to apply to later occurrences of that
-        # recurring salary stream.
-        message_dates = {p.when for p in message_salary}
-        result = [p for p in result if not (p.category == "salary" and p.when in message_dates)]
-        amendments = sorted((when, amount) for when, amount, _ in message_facts)
-        adjusted = []
-        for p in result:
-            applicable = [amount for when, amount in amendments if when <= p.when]
-            if p.category == "salary" and applicable:
-                p = ProjectionEvent(
-                    p.when, applicable[-1], p.direction, p.category,
-                    p.event_id, p.flexibility, p.recurring_ref,
-                    p.source_event_ids, p.replacement_reason,
-                )
-            adjusted.append(p)
-        result = adjusted + message_salary
+            filtered = []
+            for p in result:
+                if p.category != "salary":
+                    filtered.append(p)
+                    continue
+                blocking = [ended for ended in ended_dates if p.when > ended]
+                if not blocking:
+                    filtered.append(p)
+                    continue
+                last_end = max(blocking)
+                if any(resumed > last_end and resumed <= p.when for resumed in resume_dates):
+                    filtered.append(p)
+            result = filtered
+        generated: list[ProjectionEvent] = []
+        for application in applications:
+            if application.update_status == "ended":
+                continue
+            matching = self.matching_salary_projections(result, application)
+            if application.update_status == "resumed" and application.recurrence_scope == "future_occurrences":
+                generated.extend(self.expand_resumed_salary(application, request["user_id"], start, end, profile.home_currency))
+                continue
+            if application.recurrence_scope == "future_occurrences" and application.update_status in {"amended", "confirmed"}:
+                if matching:
+                    updated = []
+                    match_ids = {id(item) for item in matching}
+                    for p in result:
+                        if id(p) in match_ids and p.when >= application.when:
+                            updated.append(ProjectionEvent(
+                                p.when, application.amount, p.direction, p.category,
+                                p.event_id, p.flexibility, p.recurring_ref,
+                                p.source_event_ids or (application.source_id,),
+                                "salary_evidence_stream_amendment",
+                            ))
+                        else:
+                            updated.append(p)
+                    result = updated
+                    continue
+            if start < application.when <= end:
+                generated.append(ProjectionEvent(
+                    application.when, application.amount, "credit", "salary", "message_payroll",
+                    source_event_ids=(application.source_id,),
+                    replacement_reason="salary_evidence_once" if application.recurrence_scope == "once" else "salary_evidence_payday",
+                ))
+        generated_dates = {p.when for p in generated}
+        result = [p for p in result if not (p.category == "salary" and p.when in generated_dates)]
+        result = result + generated
         return result
 
     def eligible_changes(self, request: dict[str, str], projections: list[ProjectionEvent]) -> list[Change]:

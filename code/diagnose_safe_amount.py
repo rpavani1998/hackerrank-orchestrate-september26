@@ -112,9 +112,11 @@ def source_events(data: Data, user_id: str, source_ids: list[str] | tuple[str, .
 
 def evidence_for_event(data: Data, event_id: str) -> list[str]:
     statuses = []
-    for fact in data.evidence_facts.values():
-        if fact.supplied_event_id == event_id:
-            statuses.append(f"{fact.source_id}:{fact.update_status}/{fact.transaction_type}")
+    for stored in data.evidence_facts.values():
+        facts = (stored,) if not isinstance(stored, (tuple, list)) else tuple(stored)
+        for fact in facts:
+            if fact.supplied_event_id == event_id:
+                statuses.append(f"{fact.source_id}:{fact.update_status}/{fact.transaction_type}")
     return statuses
 
 
@@ -126,9 +128,10 @@ def projection_derivation(data: Data, request: dict[str, str], projection: Proje
     if projection.event_id == "message_payroll":
         facts = []
         for message in data.messages_by_user.get(user_id, []):
-            fact = data.evidence_facts.get(message["message_id"])
-            if fact and fact.transaction_type == "salary":
-                facts.append(f"{message['message_id']}:{fact.update_status}/{fact.amount or 'amount-unset'}")
+            stored = data.evidence_facts.get(message["message_id"])
+            for fact in ((stored,) if stored is not None and not isinstance(stored, (tuple, list)) else tuple(stored or ())):
+                if fact.transaction_type == "salary":
+                    facts.append(f"{message['message_id']}:{fact.update_status}/{fact.amount or 'amount-unset'}")
         return (
             f"amount={money(projection.amount)} from validated salary-message conversion; "
             f"date={projection.when.isoformat()} from evidence effective/payment date; "

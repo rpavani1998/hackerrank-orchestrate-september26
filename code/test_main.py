@@ -301,6 +301,132 @@ class FinancialAgentTests(unittest.TestCase):
         self.assertEqual(first_e, second_e)
         self.assertEqual(first_r, second_r)
 
+    def salary_fact(self, source_id, amount, when, status="resumed", scope="future_occurrences", meaning="effective_date", txn="salary"):
+        return EvidenceFact.from_mapping({
+            "source_id": source_id, "source_kind": "message", "supplied_user_id": None,
+            "supplied_request_id": None, "supplied_event_id": None, "transaction_type": txn,
+            "update_status": status,
+            "action": {"resumed": "other", "amended": "amendment", "confirmed": "confirmation", "ended": "cancellation"}[status],
+            "amount": amount, "currency": "USD" if amount is not None else None,
+            "dates": [{"date": when, "meaning": meaning}] if when else [],
+            "recurrence_scope": scope, "supporting_text": f"Salary evidence {status} {amount} {when}",
+            "missing_fields": [], "ambiguities": [], "conflicts": [],
+        })
+
+    def evidence_agent(self, events, messages, facts, request_date="2025-08-04"):
+        profile = Profile("user_test", "USD", Decimal("1000"), Decimal("100"), set(), set(), set(), set(), {"full_payment"}, None)
+        store = {}
+        for fact in facts:
+            store.setdefault(fact.source_id, [])
+            store[fact.source_id].append(fact)
+        store = {key: tuple(value) for key, value in store.items()}
+        data = SimpleNamespace(
+            events_by_user={"user_test": events}, profiles={"user_test": profile},
+            messages_by_user={"user_test": messages}, evidence_facts=store,
+            financial_analyses={}, convert=lambda amount, _source, _target, _when: amount,
+        )
+        request = {
+            "user_id": "user_test", "request_id": "request_test", "request_date": request_date,
+            "requested_amount": "1", "desired_completion_date": "2025-12-31",
+            "allows_partial_payment": "false",
+        }
+        return Agent(data), request
+
+    def test_resumed_salary_continues_without_three_settled_rows(self):
+        events = [
+            self.synthetic_event("s1", date(2025, 3, 15), "Payroll before leave", "salary", "income", "credit", amount=Decimal("2717")),
+            self.synthetic_event("s2", date(2025, 4, 15), "Payroll before leave", "salary", "income", "credit", amount=Decimal("2717")),
+            self.synthetic_event("s3", date(2025, 7, 15), "Payroll after returning from leave", "salary", "income", "credit", amount=Decimal("2717")),
+        ]
+        messages = [{"message_id": "message_10", "user_id": "user_test", "request_id": "", "sent_at": "2025-07-27", "message_text": "Regular salary of EUR 2717 resumes on 2025-08-15."}]
+        fact = self.salary_fact("message_10", "2717", "2025-08-15", "resumed", "future_occurrences", "effective_date")
+        agent, request = self.evidence_agent(events, messages, [fact], "2025-08-04")
+        credits = [p for p in agent.projections(request) if p.direction == "credit" and p.category == "salary"]
+        self.assertEqual([p.when for p in credits], [date(2025, 8, 15), date(2025, 9, 15), date(2025, 10, 15)])
+        self.assertTrue(all(p.amount == Decimal("2717") for p in credits))
+        self.assertEqual({p.replacement_reason for p in credits}, {"salary_evidence_resumed_stream"})
+
+    def test_one_confirmed_salary_does_not_recur(self):
+        events = [self.synthetic_event("s1", date(2025, 12, 15), "First-job payroll", "salary", "income", "credit", amount=Decimal("1661"))]
+        messages = [{"message_id": "message_11", "user_id": "user_test", "request_id": "request_test", "sent_at": "2026-01-03", "message_text": "Your first salary will be USD 1661 on 2026-01-15."}]
+        fact = self.salary_fact("message_11", "1661", "2026-01-15", "confirmed", "once", "payment_date")
+        agent, request = self.evidence_agent(events, messages, [fact], "2026-01-06")
+        credits = [p for p in agent.projections(request) if p.direction == "credit" and p.category == "salary"]
+        self.assertEqual([p.when for p in credits], [date(2026, 1, 15)])
+        self.assertEqual(credits[0].replacement_reason, "salary_evidence_once")
+
+    def test_two_employers_only_matching_stream_is_amended(self):
+        events = []
+        for prefix, description, amount in (("810", "Acme employer payroll", Decimal("100")), ("820", "Beta employer payroll", Decimal("80"))):
+            for index, month in enumerate((1, 2, 3), start=1):
+                events.append(self.synthetic_event(
+                    f"event_{prefix}{index}", date(2025, month, 1), description,
+                    category="salary", event_type="income", direction="credit", amount=amount,
+                ))
+        messages = [{"message_id": "message_80", "user_id": "user_test", "request_id": "request_test", "sent_at": "2025-03-10", "message_text": "Acme salary is USD 120 from 2025-04-01."}]
+        mapping = self.salary_fact("message_80", "120", "2025-04-01", "amended", "future_occurrences", "effective_date").to_mapping()
+        mapping["supplied_event_id"] = "event_8103"
+        bound = EvidenceFact.from_mapping(mapping)
+        agent, request = self.evidence_agent(events, messages, [bound], "2025-03-15")
+        credits = [p for p in agent.projections(request) if p.direction == "credit" and p.category == "salary"]
+        acme = [p for p in credits if p.recurring_ref == "event_8103" or "event_8103" in p.source_event_ids]
+        beta = [p for p in credits if p.recurring_ref == "event_8203" or "event_8203" in p.source_event_ids]
+        self.assertTrue(acme and all(p.amount == Decimal("120") for p in acme if p.when >= date(2025, 4, 1)))
+        self.assertTrue(beta and all(p.amount == Decimal("80") for p in beta))
+
+    def test_salary_end_then_resume_skips_gap(self):
+        events = self.salary_history("pay", "Payroll credit", Decimal("50"), day=15)
+        messages = [
+            {"message_id": "message_70", "user_id": "user_test", "request_id": "", "sent_at": "2025-03-20", "message_text": "Employment ended 2025-03-20."},
+            {"message_id": "message_71", "user_id": "user_test", "request_id": "", "sent_at": "2025-05-01", "message_text": "Salary of USD 50 resumes on 2025-05-15."},
+        ]
+        ended = self.salary_fact("message_70", None, "2025-03-20", "ended", "unknown", "effective_date")
+        resumed = self.salary_fact("message_71", "50", "2025-05-15", "resumed", "future_occurrences", "effective_date")
+        agent, request = self.evidence_agent(events, messages, [ended, resumed], "2025-05-10")
+        credits = [p for p in agent.projections(request) if p.direction == "credit" and p.category == "salary"]
+        self.assertFalse(any(date(2025, 4, 1) <= p.when < date(2025, 5, 15) for p in credits))
+        self.assertTrue(any(p.when == date(2025, 5, 15) for p in credits))
+
+    def test_multiple_facts_in_one_message_keep_unresolved_expense(self):
+        events = [
+            self.synthetic_event("s1", date(2025, 3, 15), "Payroll credit", "salary", "income", "credit", amount=Decimal("2717")),
+            self.synthetic_event("s2", date(2025, 4, 15), "Payroll credit", "salary", "income", "credit", amount=Decimal("2717")),
+            self.synthetic_event("s3", date(2025, 7, 15), "Payroll credit", "salary", "income", "credit", amount=Decimal("2717")),
+        ]
+        messages = [{"message_id": "message_10", "user_id": "user_test", "request_id": "", "sent_at": "2025-07-27", "message_text": "Regular salary of EUR 2717 resumes on 2025-08-15. A new recurring childcare payment begins in the same month."}]
+        salary = self.salary_fact("message_10", "2717", "2025-08-15", "resumed", "future_occurrences", "effective_date")
+        childcare = EvidenceFact.from_mapping({
+            "source_id": "message_10", "source_kind": "message", "supplied_user_id": None,
+            "supplied_request_id": None, "supplied_event_id": None, "transaction_type": "expense",
+            "update_status": "confirmed", "action": "confirmation", "amount": None, "currency": None,
+            "dates": [], "recurrence_scope": "future_occurrences",
+            "supporting_text": "A new recurring childcare payment begins in the same month.",
+            "missing_fields": ["amount", "currency", "dates"], "ambiguities": ["childcare amount and first date are unavailable"], "conflicts": [],
+        })
+        agent, request = self.evidence_agent(events, messages, [salary, childcare], "2025-08-04")
+        projections = agent.projections(request)
+        self.assertTrue(any(p.category == "salary" and p.when == date(2025, 8, 15) for p in projections))
+        self.assertFalse(any("child" in (p.category + p.event_id) for p in projections))
+        unresolved = agent.unresolved_evidence(messages)
+        self.assertEqual(len(unresolved), 1)
+        self.assertEqual(unresolved[0].transaction_type, "expense")
+        self.assertIsNone(unresolved[0].amount)
+
+    def test_future_salary_message_is_not_visible(self):
+        events = self.salary_history("pay", "Payroll credit", Decimal("50"), day=15)
+        messages = [{"message_id": "message_90", "user_id": "user_test", "request_id": "request_test", "sent_at": "2025-04-01", "message_text": "Salary resumes later."}]
+        fact = self.salary_fact("message_90", "50", "2025-04-15", "resumed", "future_occurrences", "effective_date")
+        agent, request = self.evidence_agent(events, messages, [fact], "2025-03-15")
+        credits = [p for p in agent.projections(request) if p.event_id == "message_payroll"]
+        self.assertEqual(credits, [])
+
+    def test_request_scoped_salary_message_does_not_leak(self):
+        events = self.salary_history("pay", "Payroll credit", Decimal("50"), day=15)
+        messages = [{"message_id": "message_91", "user_id": "user_test", "request_id": "request_other", "sent_at": "2025-03-10", "message_text": "Salary resumes."}]
+        fact = self.salary_fact("message_91", "50", "2025-04-15", "resumed", "future_occurrences", "effective_date")
+        agent, request = self.evidence_agent(events, messages, [fact], "2025-03-15")
+        self.assertFalse(any(p.event_id == "message_payroll" for p in agent.projections(request)))
+
     def test_explicit_event_deduplicates_same_source_series_only(self):
         events = [
             self.synthetic_event("s1", date(2025, 1, 1), "Video streaming plan"),
@@ -348,7 +474,9 @@ class FinancialAgentTests(unittest.TestCase):
         projections = Agent(data).projections(request)
         april_salary = [p for p in projections if p.when == date(2025, 4, 1) and p.category == "salary"]
         april_subscriptions = [p for p in projections if p.when == date(2025, 4, 1) and p.category == "streaming"]
-        self.assertEqual([(p.amount, p.event_id) for p in april_salary], [(Decimal("20"), "message_payroll")])
+        self.assertEqual(len(april_salary), 1)
+        self.assertEqual(april_salary[0].amount, Decimal("20"))
+        self.assertIn(april_salary[0].event_id, {"salary_2", "message_payroll"})
         self.assertEqual(len(april_subscriptions), 1)
         self.assertEqual(april_subscriptions[0].event_id, "sub_explicit")
         self.assertFalse(any(p.event_id in {"rejected", "rejected_source"} for p in projections))

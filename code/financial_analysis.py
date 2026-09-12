@@ -588,14 +588,16 @@ def _scope_messages(data: Any, user_id: str, request_id: str, as_of: date) -> li
         sent_at = date.fromisoformat(message["sent_at"][:10])
         if sent_at > as_of or (message["request_id"] and message["request_id"] != request_id):
             continue
-        fact = data.evidence_facts.get(message["message_id"])
-        if fact is None:
+        stored = data.evidence_facts.get(message["message_id"])
+        if stored is None:
             continue
-        source_event = next((event for event in data.events_by_user.get(user_id, []) if event.event_id == fact.supplied_event_id), None)
-        if fact.supplied_event_id and source_event is None:
-            continue
-        validate_evidence_semantics(fact, message["message_text"])
-        result.append((message, fact))
+        facts = (stored,) if not isinstance(stored, (tuple, list)) else tuple(stored)
+        for fact in facts:
+            source_event = next((event for event in data.events_by_user.get(user_id, []) if event.event_id == fact.supplied_event_id), None)
+            if fact.supplied_event_id and source_event is None:
+                continue
+            validate_evidence_semantics(fact, message["message_text"])
+            result.append((message, fact))
     return result
 
 
