@@ -446,7 +446,7 @@ The diagnostic and tests did not invoke `code/main.py:main()` and did not overwr
 
 ### Incremental evidence-extraction interface
 
-Model access was inspected without exposing secrets. No model SDK, OCR/vision package, dependency manifest, or credential environment variable is available. Outbound HTTPS reaches the provider network, but the unauthenticated endpoint returned HTTP 401. No model call was attempted.
+Model access was inspected without exposing secrets. No third-party SDK, OCR/vision package, or dependency manifest was needed; the adapter uses the standard library. The existing local `.env` contains a configured key, which was preserved and never printed, logged, committed, or packaged. A single live smoke extraction was completed successfully; the key value and raw authorization headers were not recorded.
 
 The complete evidence inventory is saved at:
 
@@ -456,30 +456,78 @@ evaluation/evidence_inventory.md
 
 It covers all 215 messages, their source/request/event links and non-authoritative triage labels, all 16 images and their user/request/event links, manual reference amounts, current information gaps, and the `message_14` delayed-refund fixture.
 
-Added `code/evidence_extraction.py` as a standard-library-only provider-neutral layer. It provides:
+### OpenRouter integration checkpoint
 
-- strict `EvidenceFact` validation for source identifiers, supplied references, action, amount/currency, dates and meanings, recurrence scope, supporting text, missing fields, ambiguities, and conflicts;
-- untrusted-evidence prompt delimiting;
-- cache keys containing source content, model name, prompt version, and schema version;
-- cache-hit/call metadata for model name, token counts, retries, and estimated cost;
-- an explicit `UnavailableModelProvider` blocker;
-- an `EvidenceLedger` that rejects duplicate application when deterministic and model paths converge.
+The provider-neutral layer is now connected to an OpenRouter adapter in `code/evidence_extraction.py`, while deterministic financial authority remains separate. The adapter provides:
 
-The first message category is explicit transaction-status evidence, beginning with delayed refunds. `message_14` is linked to `request_20`/`event_1785` and supports `action=delay` with no invented amount or settlement date. The interface is not wired into `Agent`: deterministic financial authority and the existing payroll parser remain unchanged until a real provider is configured.
+- project-root `.env` loading without overriding existing environment variables;
+- explicit missing-key and HTTP 401 errors without printing or logging the key;
+- configurable `OPENROUTER_MODEL`, `OPENROUTER_BASE_URL`, timeout, retry count, and attribution headers;
+- runtime model metadata verification requiring both `response_format` and `structured_outputs` support;
+- strict `response_format.type=json_schema` requests with `provider.require_parameters=true` and `allow_fallbacks=false`;
+- explicit timeout, bounded 408/409/429/5xx retries, `Retry-After` handling, and no fallback model;
+- local schema validation after structured output;
+- provider prompt/completion token usage and provider-reported cost, or an estimate from the verified model pricing when cost is absent;
+- cache keys containing source content, complete prompt hash, model, prompt version, and schema version;
+- cache reuse and duplicate-source protection through the existing extractor/ledger.
 
-Post-interface verification:
+The chosen default is `mistralai/mistral-small-24b-instruct-2501`. At implementation time, the public OpenRouter Models API reported:
 
 ```text
-extraction-contract tests: 7 passed
-full suite: 15 passed
-sample comparison: 25 samples, 0 exceptions
-sample fields: unchanged from evaluation/sample_baseline.txt
+availability: listed
+input modalities: text
+context: 32,768 tokens
+structured_outputs: supported
+response_format: supported
+prompt price: $0.05 / 1M tokens
+completion price: $0.08 / 1M tokens
+expiration: none reported
 ```
 
-The new comparison output is saved separately at:
+This is a text-message model only; image extraction remains a separate checkpoint. Model metadata was checked through the public model listing before inference. The configured model then completed one live smoke extraction for `message_14`; the second smoke invocation reused the local evidence cache.
+
+Official references used:
+
+- [Authentication](https://openrouter.ai/docs/api/reference/authentication)
+- [Structured outputs](https://openrouter.ai/docs/guides/features/structured-outputs)
+- [Models API and pricing](https://openrouter.ai/docs/guides/overview/models)
+- [API responses and usage](https://openrouter.ai/docs/api_reference/overview)
+- [Limits and retries](https://openrouter.ai/docs/api_reference/limits)
+
+### Configuration and first message category
+
+- `.env` exists locally with a configured `OPENROUTER_API_KEY`; it is ignored and was not staged. Its value is intentionally not displayed in this report or the session log.
+- `.env.example` contains placeholders only.
+- `code/package.py` independently excludes `.env`, `.env.*` backups, bytecode, caches, and Git metadata from archives; `.env.example` is allowed.
+- `code/openrouter_smoke.py` extracts only `message_14` and never invokes `code/main.py:main()`.
+- The first category is explicit transaction-status evidence, beginning with delayed refunds. `message_14` is linked to `request_20`/`event_1785` and is expected to produce `action=delay` with no invented amount or settlement date.
+- `apply_evidence_fact()` allows a visible linked status fact to produce a status-only application result, but a delayed refund without confirmed amount or settlement date remains `unresolved` with `cash_effect=none`. It does not mutate balances or create income.
+- The existing deterministic payroll parser remains available; the evidence ledger rejects duplicate application when deterministic and model paths converge. No model fact is currently applied to `Agent`; the live result is validated only through the isolated status-application boundary.
+
+### Mocked and deterministic verification
+
+```text
+OpenRouter adapter tests: 11 passed
+Evidence contract/application tests: 9 passed
+Full suite: 29 passed
+Sample comparison: 25 samples, 0 exceptions
+Sample fields: unchanged from evaluation/sample_baseline.txt
+Live smoke extraction: 1 authenticated call, 1 cache reuse
+```
+
+The live smoke result was source-linked to `message_14`/`event_1785` and had
+`amount=null`, `currency=null`, no dates, and no confirmed settlement. The
+model chose the allowed `action=refund` label for the delayed-refund wording;
+local application therefore kept it `unresolved` with `cash_effect=none`. It
+was not added to the deterministic forecast or treated as income. Provider
+usage was 236 input tokens and 183 output tokens, with provider-reported cost
+`0.00002644` USD; no credential or raw prompt was written to the report.
+
+The deterministic comparisons remain separately saved at:
 
 ```text
 evaluation/sample_comparison_after_extraction_interface.txt
+evaluation/sample_comparison_after_openrouter_adapter.txt
 ```
 
 ### Previously reported checks, not rerun during this step
@@ -565,14 +613,29 @@ The provider-neutral extraction contract, tests, evidence inventory, and post-in
   evaluation/sample_comparison_after_extraction_interface.txt
 ```
 
-The remaining working-tree paths are unrelated artifacts only.
+### Current uncommitted OpenRouter integration checkpoint
 
-Previously untracked unrelated artifacts remain preserved and are not part of this interface:
+The current working-tree files for this integration are:
 
 ```text
-.gitignore
+?? .env.example
+?? .gitignore
+?? code/README.md
+ M code/evidence_extraction.py
+ M code/main.py
+?? code/openrouter_smoke.py
+?? code/package.py
+ M code/test_evidence_extraction.py
+ M code/test_main.py
+?? code/test_openrouter.py
+ M evaluation/progress_report.md
+?? evaluation/sample_comparison_after_openrouter_adapter.txt
+```
+
+`.env` is intentionally absent from Git status because it is ignored. Previously untracked unrelated artifacts remain preserved and are not part of this checkpoint:
+
+```text
 code.zip
-code/README.md
 evaluation/usage_report.md
 output.csv
 ```
@@ -581,21 +644,21 @@ output.csv
 
 ### Production/output preservation
 
-During this extraction-interface iteration:
+During this OpenRouter integration iteration:
 
-- `code/main.py` and `output.csv` were not changed.
+- `code/main.py` changed only to expose an explicit `--mode deterministic` CLI guard; financial logic and `output.csv` were not changed.
 - The deterministic payroll parser and financial engine remain the authority.
-- No model, OCR, or vision call was made because credentials and SDKs are unavailable.
-- No message or image fact was applied to projections.
+- One live message extraction was made with the pre-existing local key; its output was validated and kept out of predictions. A second invocation reused cache without another provider call.
+- No message or image fact was applied to predictions.
+- `.env` was created locally but was not staged, logged, cached, or packaged.
 - `evaluation/sample_baseline.txt` was preserved unchanged.
 - No recurrence statistic, correction factor, or extra reserve was introduced.
-- The interface checkpoint was committed as `173b1e4`; no push was performed.
+- No push was performed; this integration is ready for a local commit after final diff review.
 
 ## Next steps
 
-1. Configure a supported model credential and SDK through environment variables; never place credentials in the repository.
-2. Add one provider adapter for the validated `message_14` delayed-refund schema, with actual call/token/retry/cost metrics and cache reuse reporting.
-3. Compare model extraction with the deterministic parser without allowing both paths to apply the same source fact.
-4. Run the message integration against focused fixtures and all 25 samples before enabling financial application.
-5. Add image extraction only as a separate checkpoint after messages are verified; retain manual image values as reference fixtures and reject unresolved amounts rather than silently omitting events.
-6. Preserve `evaluation/sample_baseline.txt`, keep `output.csv` unchanged, and measure extraction accuracy separately from affordability matches.
+1. Review the live `message_14` label choice (`refund` versus the fixture’s delayed-status interpretation) and define a general, evidence-supported status normalization rule before applying model facts broadly; do not add a one-off correction.
+2. Add deterministic conflict/application integration only after the status taxonomy is resolved; keep the salary-persistence regression and deterministic mode unchanged.
+3. Run a broader message extraction only with cache/cost accounting and source-linked validation enabled.
+4. Add image extraction only as a separate checkpoint after message integration; retain manual image values as reference fixtures and reject unresolved amounts rather than silently omitting events.
+5. Preserve `evaluation/sample_baseline.txt` and `output.csv`, and measure extraction accuracy separately from affordability matches.

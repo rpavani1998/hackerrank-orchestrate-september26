@@ -6,7 +6,7 @@ from decimal import Decimal
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from main import Agent, Data, ProjectionEvent, OUTPUT_COLUMNS, dec, ddate
+from main import Agent, Data, ProjectionEvent, OUTPUT_COLUMNS, dec, ddate, main
 
 
 class FinancialAgentTests(unittest.TestCase):
@@ -93,6 +93,10 @@ class FinancialAgentTests(unittest.TestCase):
         )
         self.assertFalse(ok)
         self.assertTrue(any(value < profile.minimum for value in balances.values()))
+
+    def test_only_deterministic_mode_is_available(self):
+        with self.assertRaises(ValueError):
+            main("ai")
 
     def test_output_contract_enums_and_bounds(self):
         requests = self.data.requests

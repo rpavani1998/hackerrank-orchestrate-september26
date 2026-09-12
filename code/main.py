@@ -751,7 +751,9 @@ def validate(rows: list[dict[str, str]], requests: list[dict[str, str]], options
                 assert token.startswith("stop:") or token.startswith("reduce_to:")
 
 
-def main() -> None:
+def main(mode: str = "deterministic") -> None:
+    if mode != "deterministic":
+        raise ValueError(f"unsupported mode: {mode}; only deterministic mode is available")
     data = Data()
     agent = Agent(data)
     rows = [agent.decide(request) for request in data.requests]
@@ -764,4 +766,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run the deterministic Buy or Wait? agent")
+    parser.add_argument("--mode", choices=["deterministic"], default="deterministic")
+    main(parser.parse_args().mode)

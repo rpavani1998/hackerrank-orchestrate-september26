@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
 from evidence_extraction import (
@@ -11,6 +12,7 @@ from evidence_extraction import (
     JsonExtractionCache,
     ModelAccessUnavailable,
     UnavailableModelProvider,
+    apply_evidence_fact,
     build_prompt,
     cache_key,
 )
@@ -98,6 +100,23 @@ class EvidenceExtractionTests(unittest.TestCase):
         with self.assertRaises(DuplicateEvidenceError):
             ledger.add(same_source)
         self.assertEqual(len(ledger), 1)
+
+    def test_delayed_refund_stays_unresolved_without_cash_effect(self):
+        source = EvidenceSource(**{**self.message_14_source().__dict__, "visibility_date": date(2026, 2, 6)})
+        fact = EvidenceFact.from_mapping(self.message_14_payload())
+        result = apply_evidence_fact(fact, source, date(2026, 2, 7), EvidenceLedger())
+        self.assertEqual(result.state, "unresolved")
+        self.assertEqual(result.cash_effect, "none")
+
+    def test_visible_status_fact_applies_without_cash_mutation(self):
+        source = EvidenceSource(**{**self.message_14_source().__dict__, "visibility_date": date(2026, 2, 6)})
+        payload = self.message_14_payload()
+        payload["action"] = "cancellation"
+        fact = EvidenceFact.from_mapping(payload)
+        result = apply_evidence_fact(fact, source, date(2026, 2, 7), EvidenceLedger())
+        self.assertEqual(result.state, "applied")
+        self.assertEqual(result.cash_effect, "status_only")
+        self.assertEqual(result.event_id, "event_1785")
 
     def test_unavailable_provider_is_explicit(self):
         with self.assertRaises(ModelAccessUnavailable):
